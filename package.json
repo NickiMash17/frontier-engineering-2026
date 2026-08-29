@@ -1,0 +1,11 @@
+{
+  "name": "frontier-engineering-2026",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CVE Reachability: application-aware vulnerability triage. Frontier Engineering Challenge 2026.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "baseline": "node scripts/baseline.js",
+    "evaluate": "node scripts/evaluate.js"
+  }
+}
