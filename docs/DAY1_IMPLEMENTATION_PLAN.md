@@ -132,14 +132,27 @@ reflection of what was actually built, not a limitation to hide.
 
 ## 4. Advisory Data (real, pinned)
 
+> **Correction made during Day-1 execution:** the table below originally
+> pinned `minimist@1.2.5` / CVE-2021-44906. Empirical testing (running the
+> real exploit payload against the real npm-installed 1.2.5 tarball)
+> showed 1.2.5 is not actually exploitable by the standard payload shape —
+> the advisory's "fixed in 1.2.6" framing does not mean 1.2.5 itself is
+> vulnerable to it. Replaced with CVE-2020-7598 / `minimist@1.2.0`,
+> confirmed exploitable by direct experiment. Full account in
+> `docs/EXPERIMENT_LOG.md` Experiment 1. Left uncorrected here would be
+> exactly the kind of unverified-advisory-metadata trust this whole
+> project argues against.
+
 Two real CVEs, chosen for clean npm-ecosystem SEMVER ranges and enough
 public detail to state exact vulnerable-symbol and version-range facts
-without guessing:
+without guessing -- and, after Experiment 1, verified exploitable by
+direct execution against the real installed package, not just trusted
+from advisory text:
 
 | CVE | Package | Vulnerable range | Fixed | Vulnerable symbol | Source |
 |---|---|---|---|---|---|
-| CVE-2021-44906 (GHSA-xvch-5gv4-984h) | `minimist` | `<=1.2.5` | `1.2.6` | `setKey()`, `index.js` lines 69–95 | OSV.dev, fetched live |
-| CVE-2019-10744 (GHSA-jf85-cpcp-j695) | `lodash` | `<4.17.12` | `4.17.12` | `defaultsDeep()` | OSV.dev, fetched live |
+| CVE-2020-7598 (GHSA-vh95-rmgr-6w4m) | `minimist` | `<0.2.1` or `1.0.0–<1.2.3` | `0.2.1` / `1.2.3` | `setKey()` — unguarded `--__proto__.<key>=<value>` | OSV.dev, fetched live; empirically verified |
+| CVE-2019-10744 (GHSA-jf85-cpcp-j695) | `lodash` | `<4.17.12` | `4.17.12` | `defaultsDeep()` | OSV.dev, fetched live; empirically verified |
 
 Both are real, well-documented prototype-pollution advisories: the
 package must be called with an attacker-influenced object/key structure
@@ -192,10 +205,10 @@ reachability situation cleanly:
 
 | Case | Package@version | Scenario | Ground truth |
 |---|---|---|---|
-| A — reachable | `minimist@1.2.5` | HTTP handler passes a JSON request body's array field directly into `minimist()` and returns the parsed result | `REACHABLE` |
-| B — installed but unreachable | `minimist@1.2.5` | Only referenced in a `scripts/build.js` dev script never invoked by the running server; server code never imports it | `NOT_REACHABLE` |
+| A — reachable | `minimist@1.2.0` | HTTP handler passes a JSON request body's array field directly into `minimist()` and returns the parsed result | `REACHABLE` |
+| B — installed but unreachable | `minimist@1.2.0` | Only referenced in a `scripts/build.js` dev script never invoked by the running server; server code never imports it | `NOT_REACHABLE` |
 | C — reachable package, condition not satisfied | `lodash@4.17.11` | HTTP handler calls `_.defaultsDeep()` on request-derived data, but an upstream whitelist strips any `__proto__`/`constructor`/`prototype` keys before the merge | `CONDITION_NOT_SATISFIED` |
-| D — indirect/challenging | `minimist@1.2.5` | HTTP handler calls a local wrapper module (`lib/argvParser.js`) which itself calls `minimist()` — reachable, but only via one hop of indirection a shallow single-file search could miss | `REACHABLE` |
+| D — indirect/challenging | `minimist@1.2.0` | HTTP handler calls a local wrapper module (`lib/argvParser.js`) which itself calls `minimist()` — reachable, but only via one hop of indirection a shallow single-file search could miss | `REACHABLE` |
 
 Case D exists specifically to probe whether a single, unstructured agent
 call follows import chains beyond the first file it finds — this is the
