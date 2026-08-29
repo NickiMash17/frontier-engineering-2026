@@ -13,7 +13,7 @@
 # running this script outside that constraint should reproduce identically.
 set -euo pipefail
 
-MANIFEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MANIFEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -W)"
 CACHE_DIR="$MANIFEST_DIR/.repo-cache"
 mkdir -p "$CACHE_DIR"
 
