@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "required": [
+    "cve",
+    "package",
+    "installed_version",
+    "vulnerable_symbol",
+    "usage_sites",
+    "reachable_path",
+    "required_conditions",
+    "attacker_controlled_input",
+    "verdict",
+    "confidence",
+    "evidence",
+    "uncertainties"
+  ],
+  "properties": {
+    "cve": { "type": "string" },
+    "package": { "type": "string" },
+    "installed_version": { "type": "string" },
+    "vulnerable_symbol": { "type": "string" },
+    "usage_sites": { "type": "array", "items": { "type": "string" } },
+    "reachable_path": { "type": "array", "items": { "type": "string" } },
+    "required_conditions": { "type": "array", "items": { "type": "string" } },
+    "attacker_controlled_input": { "type": "boolean" },
+    "verdict": {
+      "type": "string",
+      "enum": ["REACHABLE", "NOT_REACHABLE", "CONDITION_NOT_SATISFIED", "UNCERTAIN"]
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "lines", "detail"],
+        "properties": {
+          "file": { "type": "string" },
+          "lines": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "uncertainties": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
