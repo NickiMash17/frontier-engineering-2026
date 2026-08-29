@@ -1,29 +1,51 @@
-// Scaffold-verification stub, NOT a screen implementation. Its only job
-// is to prove the shell actually works end to end: ES module imports
-// resolve (i.e. the page is being served, not opened via file://) and the
-// generated real data loads. The six real screens (docs/FRONTEND_PLAN.md
-// Section 3) replace this file's body in the next phase.
+// Minimal hash router -- no router library, per docs/FRONTEND_PLAN.md.
+// Routes:
+//   #/dashboard/<tier>          Screen 3
+//   #/case/<tier>/<case_id>     Screen 4
+// <tier> is 'tier-a' or 'tier-b'. Unknown/empty hashes redirect to
+// whichever tier actually has data loaded (see defaultTier()).
 
 import { TIER_A } from './data/generated/tier-a.latest.js';
 import { TIER_B } from './data/generated/tier-b.latest.js';
+import { renderDashboard } from './components/dashboard.js';
+import { renderCaseDetail } from './components/caseDetail.js';
 
+const DATA_BY_TIER = { 'tier-a': TIER_A, 'tier-b': TIER_B };
 const app = document.getElementById('app');
 
-function summarize(label, data) {
-  if (!data || !Array.isArray(data.results)) {
-    return `${label}: no data loaded`;
-  }
-  return `${label}: ${data.results.length} case(s) loaded`;
+function defaultTier() {
+  if (DATA_BY_TIER['tier-b']) return 'tier-b';
+  if (DATA_BY_TIER['tier-a']) return 'tier-a';
+  return 'tier-b'; // neither loaded -- dashboard renders its own "no data" notice
 }
 
-app.dataset.state = 'ready';
-app.innerHTML = `
-  <div style="padding: var(--space-4); font-family: var(--font-sans);">
-    <h1 style="font-size: var(--fs-xl); margin-bottom: var(--space-2);">Frontend shell OK</h1>
-    <p class="mono">${summarize('Tier A', TIER_A)}</p>
-    <p class="mono">${summarize('Tier B', TIER_B)}</p>
-    <p style="margin-top: var(--space-4); color: var(--color-text-secondary);">
-      Screens not yet implemented -- see docs/FRONTEND_PLAN.md Section 3.
-    </p>
-  </div>
-`;
+function parseRoute(hash) {
+  const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  if (parts[0] === 'dashboard' && parts[1]) {
+    return { screen: 'dashboard', tier: parts[1] };
+  }
+  if (parts[0] === 'case' && parts[1] && parts[2]) {
+    return { screen: 'case', tier: parts[1], caseId: decodeURIComponent(parts[2]) };
+  }
+  return null;
+}
+
+function render() {
+  const route = parseRoute(window.location.hash);
+
+  if (!route) {
+    window.location.hash = `/dashboard/${defaultTier()}`;
+    return; // hashchange will re-fire render()
+  }
+
+  const tierData = DATA_BY_TIER[route.tier] || null;
+
+  if (route.screen === 'dashboard') {
+    renderDashboard(app, { tier: route.tier, tierData });
+  } else if (route.screen === 'case') {
+    renderCaseDetail(app, { tier: route.tier, tierData, caseId: route.caseId });
+  }
+}
+
+window.addEventListener('hashchange', render);
+render();
