@@ -1,0 +1,13 @@
+{
+  "case_id": "case-c-condition-not-satisfied-lodash",
+  "cve": "CVE-2019-10744",
+  "package": "lodash",
+  "installed_version": "4.17.11",
+  "verdict": "CONDITION_NOT_SATISFIED",
+  "attacker_controlled_input": true,
+  "rationale": "handlePreferencesRequest in src/server.js does call _.defaultsDeep() on attacker-controlled input (req.body.preferences), so the vulnerable code path IS reached. However, sanitize() runs first and strips any __proto__/constructor/prototype key at any depth, which is exactly the payload shape CVE-2019-10744 requires. The vulnerable function is reachable but the exploitation precondition cannot be satisfied through this endpoint.",
+  "authoritative_evidence": [
+    { "file": "src/server.js", "lines": "27-32", "detail": "handlePreferencesRequest calls sanitize(req.body.preferences) before passing the result into _.defaultsDeep()." },
+    { "file": "src/server.js", "lines": "9-21", "detail": "sanitize() recursively removes __proto__, constructor, and prototype keys at every depth of the input." }
+  ]
+}

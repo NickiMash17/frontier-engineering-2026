@@ -1,0 +1,13 @@
+{
+  "case_id": "case-b-unreachable-minimist",
+  "cve": "CVE-2020-7598",
+  "package": "minimist",
+  "installed_version": "1.2.0",
+  "verdict": "NOT_REACHABLE",
+  "attacker_controlled_input": false,
+  "rationale": "minimist is only imported and called by scripts/build.js, a developer-invoked build script. src/server.js -- the only runtime entry point in this fixture -- never imports scripts/build.js or minimist. No HTTP request path leads to the vulnerable setKey() code path, regardless of whether the installed version is genuinely exploitable (it is -- see case-a-reachable-minimist/ground_truth.json).",
+  "authoritative_evidence": [
+    { "file": "src/server.js", "lines": "1-11", "detail": "The entire runtime server module; contains no reference to minimist or scripts/build.js." },
+    { "file": "scripts/build.js", "lines": "1-11", "detail": "The only file in this fixture that calls minimist(); it is a standalone script, not imported by anything." }
+  ]
+}

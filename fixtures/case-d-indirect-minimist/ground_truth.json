@@ -1,0 +1,13 @@
+{
+  "case_id": "case-d-indirect-minimist",
+  "cve": "CVE-2020-7598",
+  "package": "minimist",
+  "installed_version": "1.2.0",
+  "verdict": "REACHABLE",
+  "attacker_controlled_input": true,
+  "rationale": "handleConfigRequest in src/routes/config.js reads req.query.opts -- an attacker-controlled query-string value -- and passes it to parseOptions() in src/lib/argvParser.js, which calls minimist() directly with no filtering. The vulnerable code path is reachable (empirically verified against this exact installed version, see case-a-reachable-minimist/ground_truth.json and docs/EXPERIMENT_LOG.md Experiment 1), but only via one hop of indirection through the wrapper module; a search limited to files that literally say 'minimist' next to an HTTP handler would miss it.",
+  "authoritative_evidence": [
+    { "file": "src/routes/config.js", "lines": "3-13", "detail": "handleConfigRequest reads req.query.opts and calls parseOptions(rawOpts)." },
+    { "file": "src/lib/argvParser.js", "lines": "3-8", "detail": "parseOptions() is a thin wrapper that calls minimist(argvStyleArray) directly." }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "fixture-case-c-condition-not-satisfied-lodash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tier A benchmark fixture: lodash@4.17.11 (CVE-2019-10744) reachable from an HTTP handler, but the exploit precondition is stripped upstream.",
+  "dependencies": {
+    "lodash": "4.17.11"
+  }
+}

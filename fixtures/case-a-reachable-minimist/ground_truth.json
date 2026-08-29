@@ -1,0 +1,12 @@
+{
+  "case_id": "case-a-reachable-minimist",
+  "cve": "CVE-2020-7598",
+  "package": "minimist",
+  "installed_version": "1.2.0",
+  "verdict": "REACHABLE",
+  "attacker_controlled_input": true,
+  "rationale": "handleParseArgsRequest in src/server.js passes req.body.args -- an attacker-controlled JSON array from the HTTP request body -- directly into minimist() with no sanitization, e.g. ['--__proto__.polluted','yes']. Empirically verified against the real npm-installed minimist@1.2.0 tarball: minimist(['--__proto__.y','Polluted']) leaves ({}).y === 'Polluted' afterward (see docs/EXPERIMENT_LOG.md Experiment 1). Note: an earlier draft of this fixture used minimist@1.2.5 and CVE-2021-44906, but empirical testing showed the real 1.2.5 tarball already neutralizes the standard __proto__ and constructor.prototype payload shapes -- it was not a valid REACHABLE case and was replaced with this genuinely-verified one.",
+  "authoritative_evidence": [
+    { "file": "src/server.js", "lines": "9-13", "detail": "handleParseArgsRequest reads req.body.args and calls minimist(rawArgs) with no filtering." }
+  ]
+}

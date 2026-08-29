@@ -1,0 +1,27 @@
+[
+  {
+    "cve": "CVE-2020-7598",
+    "package": "minimist",
+    "ecosystem": "npm",
+    "vulnerable_ranges": [
+      { "introduced": "0", "fixed": "0.2.1" },
+      { "introduced": "1.0.0", "fixed": "1.2.3" }
+    ],
+    "vulnerable_symbol": "setKey() in index.js -- unguarded assignment via a --__proto__.<key>=<value> argument",
+    "severity": "MODERATE",
+    "source_file": "CVE-2020-7598.json",
+    "empirically_verified": "node -e payload ['--__proto__.y','Polluted'] against the real npm-installed 1.2.0 tarball; ({}).y === 'Polluted' afterward. See docs/EXPERIMENT_LOG.md Experiment 1."
+  },
+  {
+    "cve": "CVE-2019-10744",
+    "package": "lodash",
+    "ecosystem": "npm",
+    "vulnerable_ranges": [
+      { "introduced": "0", "fixed": "4.17.12" }
+    ],
+    "vulnerable_symbol": "defaultsDeep()",
+    "severity": "CRITICAL",
+    "source_file": "CVE-2019-10744.json",
+    "empirically_verified": "node -e payload {constructor:{prototype:{polluted:'yes'}}} via _.defaultsDeep({}, payload, {}) against the real npm-installed 4.17.11 tarball; ({}).polluted === 'yes' afterward. See docs/EXPERIMENT_LOG.md Experiment 1."
+  }
+]

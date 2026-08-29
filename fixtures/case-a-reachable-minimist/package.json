@@ -1,0 +1,9 @@
+{
+  "name": "fixture-case-a-reachable-minimist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tier A benchmark fixture: minimist@1.2.0 (CVE-2020-7598) reachable from an HTTP handler.",
+  "dependencies": {
+    "minimist": "1.2.0"
+  }
+}

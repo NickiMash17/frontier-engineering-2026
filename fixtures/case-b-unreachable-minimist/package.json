@@ -1,0 +1,9 @@
+{
+  "name": "fixture-case-b-unreachable-minimist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tier A benchmark fixture: minimist@1.2.0 (CVE-2020-7598) installed but only used by a dev-only build script, never reachable at runtime.",
+  "dependencies": {
+    "minimist": "1.2.0"
+  }
+}
