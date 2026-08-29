@@ -35,3 +35,4 @@ tmp/
 
 # Tier B benchmark: real external repos are cloned on demand, never vendored
 evaluation/benchmarks/tier-b/.repo-cache/
+frontend/data/generated/
