@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CVE Reachability — Investigation</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!--
+    This page must be served over http:// (e.g. `npx serve .` or
+    `python -m http.server`, run from inside frontend/) -- it will NOT
+    work if index.html is opened directly (file://). app.js below is an
+    ES module, and browsers block ES module imports from file:// origins.
+    See docs/FRONTEND_PLAN.md Section 1.
+  -->
+  <div id="app" data-state="loading">
+    <p class="mono" style="padding: var(--space-4);">Loading…</p>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
