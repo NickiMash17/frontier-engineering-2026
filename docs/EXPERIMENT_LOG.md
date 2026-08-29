@@ -247,3 +247,97 @@ retry now that the immediate research task has stopped, in case the block
 was tied to the specific research actions rather than the whole
 remainder of the conversation as stated. Option (a) is the one the
 classifier's own message points to.
+
+---
+
+## Experiment 5 — Tier B debugging arc and first successful run
+
+**Hypothesis:** `scripts/evaluate_tier_b.js`, wired up in Experiment 4 but
+never executed, would run against the frozen manifest and repo cache the
+same way `scripts/evaluate.js` already does for Tier A.
+
+**What actually happened, in order (all on Windows):**
+
+1. `evaluation/benchmarks/tier-b/fetch_repos.sh` used `pwd` instead of
+   `pwd -W` inside a Node subshell to resolve its own directory, which
+   doubled the drive letter in the resulting path (e.g.
+   `C:/c:/Users/...`) and broke every downstream path built from it. Fixed
+   by using `pwd -W`.
+2. `scripts/advanced/run_case.js`'s `resolveClaudeBinary()` returned the
+   bare string `'claude'` on Windows. Node's built-in `spawnSync` cannot
+   resolve `claude` to the actual `claude.cmd` shim without `shell: true`
+   -- and `shell: true` would have broken argument escaping for the JSON
+   schema and prompt text passed as CLI args. Fixed by switching to the
+   `cross-spawn` package (`const spawnSync = require('cross-spawn').sync`),
+   which resolves `.cmd` files and escapes arguments correctly across
+   platforms without a shell.
+3. The investigation prompt and the system prompt were both multi-line
+   strings passed as raw CLI argument elements. On Windows, a multi-line
+   string passed this way through the cross-spawn/`cmd.exe` argument
+   chain gets silently truncated at the first newline -- confirmed by
+   direct testing, where a 3-line probe prompt was received by the model
+   as only its first line. This is the actual root cause behind every
+   earlier Tier B attempt receiving no real task. Fixed by passing the
+   investigation prompt via stdin (`spawnSync`'s `input` option, prompt
+   removed from `args`) and by flattening the system prompt to a single
+   line (`.join(' ')` instead of `.join('\n')` in
+   `scripts/advanced/systemPrompt.js`) -- the system prompt does not
+   depend on embedded newlines to function as instructions.
+4. A related bug: the subprocess inherited the orchestrator's own working
+   directory (and therefore its git status) instead of the fixture's,
+   which the CLI auto-injects as ambient context -- causing the agent to
+   reason about the orchestrator's own repo state and, in one case,
+   address the researcher directly instead of investigating the target.
+   Fixed by adding `cwd: fixtureAbsolutePath` to the `spawnSync` call.
+5. Separately, in the evaluation harness itself: `checkEvidence()` in
+   `scripts/evaluate_tier_b.js` called `fs.readFileSync` on any evidence
+   entry whose cited path existed, without checking it was actually a
+   file -- an entry citing a directory (e.g. a package folder under
+   `node_modules`) crashed the harness with `EISDIR`. Fixed by adding
+   `fs.statSync(c).isFile()` to the existence check, so a directory
+   citation is correctly marked unverified instead of crashing the run.
+
+**Result:** with all five fixes in place, `node scripts/evaluate_tier_b.js`
+completed a real run against all 5 Tier B cases. Stored at
+`evaluation/results-tier-b/2026-08-29T13-12-24-798Z/results.json`.
+
+| Metric | Baseline | Advanced |
+|---|---|---|
+| Accuracy | 2/5 = 40% | 5/5 = 100% |
+| False positives | 3 | 0 |
+| False negatives | 0 | 0 |
+| Avg confidence | n/a | 0.89 |
+| Avg evidence completeness | n/a | 86.5% |
+| Total cost | $0 | $0.5680 |
+| Avg cost/case | $0 | $0.1136 |
+| Avg duration/case | ~0 ms | ~54 s |
+
+All 5 verdicts were exact matches against frozen ground truth. See
+`docs/EVALUATION.md`'s Tier B Results section for the full per-case table
+and `docs/TIER_B_REPORT.md` for the complete report.
+
+**Failure/success:** Success, but with an important distinction worth
+recording plainly: every failure that occurred on the way to this result
+was an infrastructure/plumbing failure (path resolution, subprocess
+argument passing, working-directory inheritance, a harness crash on an
+edge-case citation shape) -- none was a reasoning failure of the advanced
+agent itself. Once the agent actually received the real task (which,
+per point 3 above, it had not been doing in earlier attempts), it reached
+the correct verdict on all 5 cases including the two harder ones
+(`tb-2`/`tb-3`, `tb-4`/`tb-5`) on the first try.
+
+**Decision:** Per the standing "complexity is earned by failure" rule, no
+specialized agent role (locator, path-tracer, condition analyst,
+adversary, synthesizer) is justified -- there is no verdict failure
+anywhere in Tier B to attach one to. This upgrades
+`docs/ARCHITECTURE_DECISIONS.md` ADR-003 from a Tier-A-only finding to a
+KEEP SINGLE AGENT decision now backed by a real Tier B run, superseding
+Experiment 4's interim "no decision possible yet" placeholder. See
+`docs/ARCHITECTURE_DECISIONS.md` ADR-005.
+
+**Next action:** Per `docs/TIER_B_REPORT.md`'s recommendation: extend
+Tier B with additional cases/repositories only if time allows before
+submission; otherwise proceed to hardening/frontend work with this
+benchmark's real limitations (n=5, single repository, 8 of 10 difficulty
+categories, one evidence-quality caveat on `tb-1`) stated explicitly in
+the submission rather than omitted.

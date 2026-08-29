@@ -115,3 +115,47 @@ and wiring for code that is never executed would be unjustified weight.
 The one place execution genuinely matters -- confirming a package version
 is *actually* exploitable -- was done directly with real `node -e` calls
 against the real installed package (Experiment 1), not simulated.
+
+---
+
+## ADR-005: No additional agent role justified after Tier B (Experiment 5) -- KEEP SINGLE AGENT
+
+**Decision:** The advanced system remains the same single, unstructured
+agent used for Tier A. No specialized role (locator, path-tracer,
+condition analyst, adversary, synthesizer) has been added after a real
+Tier B run.
+
+**Why:** `scripts/evaluate_tier_b.js` ran all 5 Tier B cases -- real CVEs,
+a real pinned repository (OWASP/NodeGoat), genuinely varied reachability
+depths (direct, transitive, dead-import, two independent CVEs against the
+same call site) -- and the agent reached the correct verdict on every
+single one: 5/5 exact matches, 0 false positives, 0 false negatives, avg
+confidence 0.89, avg evidence completeness 86.5%. Full numbers in
+`docs/EVALUATION.md` and `docs/TIER_B_REPORT.md`; full run in
+`evaluation/results-tier-b/2026-08-29T13-12-24-798Z/results.json`. Per
+the standing rule (`docs/CVE_REACHABILITY_PLAN.md` Section 5, restated in
+ADR-003), a role is added only when a diagnosed failure specifically
+justifies it. There is no diagnosed failure here -- every failure
+encountered on the way to this result was in the CLI-invocation plumbing
+(path resolution, `.cmd` binary resolution, argv newline truncation,
+working-directory inheritance) or the evaluation harness itself (an
+`EISDIR` crash on a directory-shaped evidence citation), never in the
+agent's own reasoning (`docs/EXPERIMENT_LOG.md` Experiment 5). This
+upgrades ADR-003 from a Tier-A-only finding to a decision backed by a
+second, independent, real-world benchmark.
+
+**What this does not claim:** a clean 5/5 at n=5 is real evidence, not
+proof the architecture holds at every level of difficulty these
+categories can produce -- two of the patterns this benchmark most wanted
+to stress (a sanitization bypass where the app's own mitigation is
+genuinely present but insufficient, and a framework-mediated indirect
+flow) were each exercised by exactly one case pairing, not repeated or
+varied (`docs/TIER_B_REPORT.md` Section 7). The decision is "no evidence
+of failure yet," not "generalization is proven."
+
+**What would change this decision:** the same standing condition as
+ADR-003 -- a specific, diagnosed failure mode in a future case (additional
+Tier B cases, a second repository, or real-world use) gets exactly the
+one corresponding role added, with the failure documented in
+`docs/EXPERIMENT_LOG.md` first. Not added preemptively for a category of
+case this benchmark hasn't actually produced a failure on yet.

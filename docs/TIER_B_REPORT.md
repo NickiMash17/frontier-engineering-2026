@@ -1,21 +1,20 @@
 # Tier B Report — Real-World Reachability Reality Test
 
-**This report cannot answer the question it was commissioned to answer.**
-Ground truth for a real-world benchmark was successfully built; the
-evaluation itself could not be run. Both facts are reported here in full,
-because the alternative -- filling in the missing half with a plausible
-estimate -- is exactly the kind of fabrication this project's own
-standing rules prohibit. This document follows the required stop-report
-structure precisely, including the sections that have to say "not
-available" rather than a number.
+Ground truth for a real-world benchmark was built, frozen, and then
+actually evaluated. Getting to that point required finding and fixing
+three separate Windows-specific bugs in the CLI-invocation path plus one
+evaluator crash — the full account is in `docs/EXPERIMENT_LOG.md`
+Experiments 4 and 5, and summarized in Section 9's "what happened"
+account below. This report follows the required stop-report structure.
 
 ## 1. Benchmark
 
 **5 cases**, all from one pinned commit of one real repository
 (OWASP/NodeGoat, `c5cb68a7084e4ae7dcc60e6a98768720a81841e8`) — not the
-~10-16-case, multi-repository benchmark originally scoped. See Section 7
-for why, and `evaluation/benchmarks/tier-b/manifest.json` for the frozen
-detail on every case.
+~10-16-case, multi-repository benchmark originally scoped; a second
+repository was in progress when an auto-mode safety classifier blocked
+further Bash execution mid-build (`docs/EXPERIMENT_LOG.md` Experiment 4).
+Full detail on every case in `evaluation/benchmarks/tier-b/manifest.json`.
 
 Category distribution (a case can and does span more than one category):
 
@@ -32,103 +31,144 @@ Category distribution (a case can and does span more than one category):
 | Ambiguous case | tb-2 |
 | Challenging real-world case | tb-2 |
 
+8 of 10 originally requested difficulty categories are covered; the two
+gaps are documented in `manifest.json`'s `documented_gaps`, not silently
+dropped.
+
 ## 2. Baseline
 
-**Not run.** `scripts/baseline.js`'s logic applies unchanged to Tier B
-(it already reads `data/advisories/index.json`, now extended with the
-three new advisories this benchmark needed), but it has not been executed
-against the Tier B manifest in this session.
+Deterministic, code-blind version-range match (`scripts/baseline.js`,
+unmodified from Tier A) against `data/advisories/index.json`. Flagged all
+5 cases `VULNERABLE` — it has no way to know any of them are safe in
+context, by design.
+
+**Result: 2/5 correct (40% accuracy), 3 false positives, 0 false
+negatives.**
 
 ## 3. Advanced v1
 
-**Not run.** `scripts/advanced/run_case.js` (the same single, unstructured
-agent used for Tier A, unmodified, per the standing instruction not to
-improve it before the first Tier B result) is wired into
-`scripts/evaluate_tier_b.js`, which has not been executed.
+The same single, unstructured agent used for Tier A, run unmodified
+(per the standing instruction not to improve it before the first Tier B
+result) via `scripts/evaluate_tier_b.js`.
+
+**Result: 5/5 correct (100% accuracy), 0 false positives, 0 false
+negatives.** Avg confidence 0.89. Avg evidence completeness 86.5%. Avg
+cost $0.1136/case. Avg duration 54s/case. Total cost across all 5 cases:
+$0.5680.
 
 ## 4. Per-case results
 
-**Not available.** No case has been run.
+| Case | Ground Truth | Baseline | Advanced | Correct? | Evidence Completeness | Duration | Cost |
+|---|---|---|---|---|---|---|---|
+| `tb-1-underscore-dead-import` | `NOT_REACHABLE` | `VULNERABLE` | `NOT_REACHABLE` | yes | 83% | 54s | $0.1106 |
+| `tb-2-marked-sanitize-bypass` | `REACHABLE` | `VULNERABLE` | `REACHABLE` | yes | 100% | 44s | $0.0907 |
+| `tb-3-marked-redos-same-sink` | `REACHABLE` | `VULNERABLE` | `REACHABLE` | yes | 100% | 40s | $0.0787 |
+| `tb-4-lodash-pure-transitive` | `NOT_REACHABLE` | `VULNERABLE` | `NOT_REACHABLE` | yes | 71% | 44s | $0.1124 |
+| `tb-5-minimist-pure-transitive` | `NOT_REACHABLE` | `VULNERABLE` | `NOT_REACHABLE` | yes | 78% | 87s | $0.1756 |
+
+Source: `evaluation/results-tier-b/2026-08-29T13-12-24-798Z/results.json`.
 
 ## 5. Failures
 
-**Not available.** No failure taxonomy can be built without a run to
-analyze.
+**None at the verdict/classification level — all 5 cases were exact
+matches.** Every failure encountered before this result was
+infrastructure-level, not reasoning-level, and all were fixed before this
+run:
+
+1. `evaluation/benchmarks/tier-b/fetch_repos.sh` used `pwd` instead of
+   `pwd -W` inside a Node subshell, doubling the drive letter in every
+   resolved path.
+2. `resolveClaudeBinary()` returned bare `'claude'`, which Node's built-in
+   `spawnSync` can't resolve to `claude.cmd` on Windows without
+   `shell: true` — which would have broken argument escaping for the
+   JSON schema and prompt text. Fixed by switching to the `cross-spawn`
+   package.
+3. The investigation prompt and the system prompt were both multi-line
+   strings passed as raw CLI arguments. On Windows, the
+   cross-spawn/`cmd.exe` argument chain silently truncates such a string
+   at its first newline — confirmed by direct testing, where a 3-line
+   probe prompt arrived at the model as only its first line. **This was
+   the actual root cause of every case receiving no real task in earlier
+   attempts.** Fixed by passing the investigation prompt via stdin
+   (`spawnSync`'s `input` option) and flattening the system prompt to one
+   line.
+4. A related bug: the subprocess inherited the orchestrator's own working
+   directory (and its git status, auto-injected as ambient context by the
+   CLI) instead of the fixture's, causing the agent to reason about the
+   wrong repository and, in one case, address the researcher directly
+   rather than investigate. Fixed by setting `cwd` to the fixture path.
+5. In the evaluation harness itself: `checkEvidence()` crashed with
+   `EISDIR` when an evidence entry cited a directory rather than a file.
+   Fixed by checking `fs.statSync(c).isFile()`.
+
+None of these were reasoning failures of the advanced agent — once it
+actually received the real task, it reached the correct verdict on every
+case on the first try, including the two pairs designed to be hard
+(`tb-2`/`tb-3`'s misleading-mitigation case, `tb-4`/`tb-5`'s pure
+transitive-dependency scoping question).
 
 ## 6. Evidence quality
 
-**Not available for execution results.** What *was* done, per Phase 10's
-request to improve the evaluator beyond "the cited file/line exists":
+Avg completeness 86.5%, driven down primarily by one specific, understood
+gap rather than diffuse citation problems: **one entry in `tb-1`'s
+evidence was marked unverified because the agent cited a search method**
+("repo-wide grep for `require('underscore')`") **rather than a
+file+line location** — the automated checker can only verify file-based
+citations. This is an evaluator limitation, not an agent error: the
+agent's underlying claim (no other file in the app references underscore)
+was correct and matches the frozen ground truth, but the checker has no
+way to verify a citation shaped as a search method rather than a
+location. `tb-4` (71%) and `tb-5` (78%) show smaller versions of the same
+pattern. `tb-2` and `tb-3` (100%) show the checker works cleanly when
+citations are file+line shaped, which they were for these two.
 
-- `scripts/evaluate_tier_b.js`'s evidence check is currently at the same
-  maturity as Tier A's — citation *validity* (file exists, line range in
-  bounds), not citation *relevance* (does the text at that location
-  actually support the specific claim) or verdict-level *completeness*
-  (is the cited evidence, taken together, sufficient to support the
-  verdict). Improving this was scoped for after a real Tier B run
-  produced cases to calibrate against — building a relevance/completeness
-  checker against zero real runs would be designing in the dark.
-- The manual-verification protocol Phase 10 asks for when semantic
-  verification can't be automated: for each case, compare the advanced
-  agent's `evidence[]` entries against the `ground_truth_evidence[]`
-  entries already frozen in `manifest.json` — a human (or a second,
-  independent review pass) reads both citation sets side by side and
-  judges whether the agent's citations actually support its stated
-  verdict, using the frozen ground-truth evidence as the answer key. This
-  is documented now, ready to apply the moment a real run exists.
+Citation *validity* (file exists, line range in bounds) is what's
+measured; citation *relevance* (does the cited text actually support the
+specific claim) and verdict-level *completeness* were not automated for
+this run, per the plan recorded in the prior version of this report — the
+concrete gap surfaced above (search-method citations) is exactly the kind
+of case a relevance-aware checker would need to handle next.
 
 ## 7. Generalization assessment
 
-**Cannot be made.** This is the section the whole exercise exists to
-produce, and it requires the run in Sections 2-3. What can be said
-honestly:
+Tier A's split (100% advanced / 50% baseline, n=4) held up directionally
+on Tier B as 100% advanced / 40% baseline (n=5) — real evidence the
+mechanism holds beyond Tier A's controlled fixtures.
 
-- Tier A predicted the single-agent architecture would handle multi-hop
-  indirection (`case-d`) and precondition/sanitization reasoning
-  (`case-c`) without failure, and it did. Tier B's `tb-2` and `tb-3`
-  cases were specifically chosen to stress a harder version of exactly
-  that: indirection through two files instead of one, and a
-  precondition the *target application itself* believes is satisfied via
-  a stated mitigation that the specific CVE defeats. Whether the
-  single-agent system handles that additional layer of difficulty is
-  precisely what Section 2-3's missing run would show.
-- `tb-4` and `tb-5` (pure transitive dependencies, never required by the
-  application at all) test a scoping question Tier A never posed: does
-  the agent correctly conclude "not reachable from this application" for
-  a package the application never touches, rather than treating every
-  installed package as equally in-scope? This is a real generalization
-  question Tier A's fixtures (which always had the vulnerable package
-  directly required somewhere) could not test.
+**Stated plainly, not overclaimed:** the two hardest patterns the
+original plan predicted would be the real generalization test — a
+sanitization bypass where the application's own mitigation is genuinely
+present but insufficient (`tb-2`), and a framework-mediated indirect flow
+(`tb-2`/`tb-3`'s route → DAO → template chain) — were each exercised
+by exactly one pairing, not stressed repeatedly or varied. A clean 5/5 at
+this sample size is real, meaningful evidence the single-agent approach
+generalizes past controlled fixtures; it is not evidence it holds at
+every level of real-world difficulty those two categories can produce.
+This is a real, honest gap in what's been tested, not a confirmed pass on
+the hardest possible version of these patterns.
 
 ## 8. Architecture decision
 
-**KEEP SINGLE AGENT** — not because Tier B evidence supports it (there is
-none yet), but because there is no evidence of any failure to justify
-changing it. The standing rule (`docs/ARCHITECTURE_DECISIONS.md` ADR-003)
-already states a role is added only when a diagnosed failure specifically
-justifies it; absent a Tier B run, that bar plainly has not been met, so
-the architecture does not change. This is a decision about what *not* to
-do given no new evidence, not a validated generalization claim.
+**KEEP SINGLE AGENT.**
+
+No verdict failure was observed anywhere in Tier B. Per the standing
+"complexity is earned by failure" rule, there is no evidence basis for
+adding any specialized role (locator, path-tracer, condition analyst,
+adversary, synthesizer) — each of those roles exists in the original plan
+to fix a *specific, observed* failure mode, and none occurred. This is
+now an evidence-backed decision made after a real 5-case run, superseding
+the interim "no decision possible yet" placeholder this report carried
+before the classifier block was resolved. See
+`docs/ARCHITECTURE_DECISIONS.md` ADR-005.
 
 ## 9. Recommendation
 
-Two concrete, sequential next actions:
-
-1. **Execute Tier B.** From a session with normal Bash access (a fresh
-   session, or this one continued outside auto mode — see Section 7):
-   ```bash
-   bash evaluation/benchmarks/tier-b/fetch_repos.sh
-   node scripts/evaluate_tier_b.js
-   ```
-   Then re-run this report's Sections 2-8 against the real
-   `evaluation/results-tier-b/*/results.json` output, following the exact
-   failure-taxonomy and architecture-decision process the Day-2
-   instructions specify (Phases 6-9) — none of that process is skipped,
-   it simply has no data yet to run on.
-2. **Only after that**, decide whether Tier B's second repository (and
-   the two documented category gaps) are worth pursuing further, now that
-   whatever caused the research block is no longer live in a fresh
-   session.
+Given the time spent on Windows-specific debugging to get a real run at
+all, extend Tier B with additional cases/repositories **only if time
+allows**. Otherwise, proceed to hardening/frontend work with this
+benchmark's real limitations — n=5, single repository, 8 of 10 difficulty
+categories, one evidence-checker gap on search-method citations — stated
+explicitly in the submission rather than omitted.
 
 ## 10. Reproducibility
 
@@ -136,37 +176,34 @@ Two concrete, sequential next actions:
   clones the pinned repository fresh from its public URL at its exact
   commit SHA — nothing is vendored.
 - **Pinned benchmark:** `evaluation/benchmarks/tier-b/manifest.json` is
-  frozen (see its own `note` field) — any future correction must be
-  logged in `docs/EXPERIMENT_LOG.md` as a discovery/correction entry, not
+  frozen (see its own `note` field); any future correction must be logged
+  in `docs/EXPERIMENT_LOG.md` as a discovery/correction entry, not
   silently edited.
-- **Reproducible commands:** listed in Section 9.
-- **Test status:** `tests/tier_b_manifest.test.js` validates the
-  manifest's internal consistency (every case references a declared
-  repository, has a valid verdict and a matching advisory entry, REACHABLE
-  cases declare a reachable path, NOT_REACHABLE cases don't, gaps are
-  documented) — **written but not run** in this session; `npm test` was
-  blocked along with everything else described in Section 7. It has not
-  been confirmed to pass.
-- **Git status:** all Tier B artifacts (`data/advisories/*` additions,
-  `evaluation/benchmarks/tier-b/*`, `scripts/evaluate_tier_b.js`,
-  `tests/tier_b_manifest.test.js`, this report, and the other doc updates)
-  exist in the working tree. Whether they are committed depends on
-  whether `git add`/`git commit` were also affected by Section 7's
-  block — reported plainly, not assumed, in the message accompanying this
-  report.
+- **All fixes documented:** the five fixes in Section 5 are each recorded
+  in `docs/EXPERIMENT_LOG.md` Experiment 5 with the specific file and
+  change.
+- **Commands:**
+  ```bash
+  bash evaluation/benchmarks/tier-b/fetch_repos.sh
+  node scripts/evaluate_tier_b.js
+  ```
+- **Git status:** reported as clean and pushed to `main` as of commit
+  `775d96f`, plus this session's `checkEvidence` `isFile()` fix on top —
+  stated here as reported, not independently re-verified by this
+  automated session (git write operations were not available to it in
+  this line of work; see Experiment 4).
 
 ---
 
 ## What actually happened (full account)
 
-See `docs/EXPERIMENT_LOG.md` Experiment 4 for the complete, chronological
-record: the code-search and dependents-graph approaches that didn't pan
-out, the pivot to OWASP/NodeGoat that did, and the exact point (attempting
-to clone a second repository for diversity) where an auto-mode safety
-classifier began blocking further Bash execution in this line of work —
-a block that turned out to cover not just new external fetches but even
-locally re-running this project's own pre-existing test suite, while
-leaving unrelated commands (`git status`, `echo`) unaffected throughout.
-No attempt was made to reword or route around it, per its own explicit
-instruction; this report and the accompanying stop-message are the
-"stop and tell the user" step that instruction asked for.
+See `docs/EXPERIMENT_LOG.md` Experiments 4 and 5 for the complete,
+chronological record: the code-search and dependents-graph approaches
+that didn't pan out, the pivot to OWASP/NodeGoat that did, the auto-mode
+safety classifier block that halted research on a second repository and
+this session's ability to run or commit anything for the remainder of
+that earlier work, and — in a later continuation — the five concrete
+bugs found and fixed (three in the CLI-invocation path, one in
+working-directory inheritance, one in the evaluation harness) that had
+been silently causing every prior Tier B attempt to fail before producing
+any real signal, followed by the clean 5/5 run this report documents.
