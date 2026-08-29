@@ -23,5 +23,41 @@
     "severity": "CRITICAL",
     "source_file": "CVE-2019-10744.json",
     "empirically_verified": "node -e payload {constructor:{prototype:{polluted:'yes'}}} via _.defaultsDeep({}, payload, {}) against the real npm-installed 4.17.11 tarball; ({}).polluted === 'yes' afterward. See docs/EXPERIMENT_LOG.md Experiment 1."
+  },
+  {
+    "cve": "CVE-2021-23358",
+    "package": "underscore",
+    "ecosystem": "npm",
+    "vulnerable_ranges": [
+      { "introduced": "1.3.2", "fixed": "1.12.1" }
+    ],
+    "vulnerable_symbol": "template() -- arbitrary code execution via an unsanitized variable-property argument",
+    "severity": "HIGH",
+    "source_file": "CVE-2021-23358.json",
+    "empirically_verified": "Not attempted for this case -- the case's ground truth is NOT_REACHABLE because _.template() is never called anywhere in the target application, which holds regardless of the sink's exploitability in isolation. See docs/EXPERIMENT_LOG.md Experiment 4."
+  },
+  {
+    "cve": "CVE-2016-10531",
+    "package": "marked",
+    "ecosystem": "npm",
+    "vulnerable_ranges": [
+      { "introduced": "0", "fixed": "0.3.6" }
+    ],
+    "vulnerable_symbol": "link URI sanitizer -- bypassable via HTML-entity-obfuscated dangerous URI schemes even when sanitize:true is set",
+    "severity": "MODERATE",
+    "source_file": "CVE-2016-10531.json",
+    "empirically_verified": "node -e against the real npm-installed marked@0.3.5 with sanitize:true set exactly as the target app configures it; a javascript: URI obfuscated as 'javascript&#58document;alert(1)' produces a live <a href> element while the plain scheme is correctly blocked. See docs/EXPERIMENT_LOG.md Experiment 4."
+  },
+  {
+    "cve": "GHSA-p9wx-2529-fp83",
+    "package": "marked",
+    "ecosystem": "npm",
+    "vulnerable_ranges": [
+      { "introduced": "0", "fixed": "0.3.17" }
+    ],
+    "vulnerable_symbol": "unspecified -- ReDoS class, full advisory detail not captured (see source_file note)",
+    "severity": "UNKNOWN",
+    "source_file": "GHSA-p9wx-2529-fp83.json",
+    "empirically_verified": "Not attempted -- constructing a ReDoS timing PoC is itself exploit development, which the Day-2 instructions ask to avoid. Ground truth rests on the documented version range only."
   }
 ]

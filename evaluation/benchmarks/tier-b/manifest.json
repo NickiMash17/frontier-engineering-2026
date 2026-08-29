@@ -1,0 +1,137 @@
+{
+  "frozen_at": "2026-08-30",
+  "note": "This manifest is frozen. Ground truth was authored and reviewed before the advanced system was run against any of these cases. Any later correction must be recorded in docs/EXPERIMENT_LOG.md as a discovery/correction entry, never silently edited here without that record.",
+  "repositories": [
+    {
+      "repo_id": "nodegoat",
+      "url": "https://github.com/OWASP/NodeGoat.git",
+      "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+      "commit_date": "2023-06-21T10:23:23+03:00",
+      "why_this_repo": "Real, OWASP-maintained, intentionally realistic Express/MongoDB/Swig application used for security education. Chosen because it is a fixed pedagogical snapshot that has not been aggressively dependency-bumped, giving it multiple genuinely real, still-present vulnerable dependencies at varying reachability depths -- not because it was constructed for this benchmark."
+    }
+  ],
+  "single_repository_limitation": "Tier B was designed to span multiple real repositories. A second repository (a different OWASP-style vulnerable-by-design Node.js application) was going to be cloned for additional diversity, but the clone attempt -- and all subsequent attempts to continue researching new external CVE/repo material in this line of work -- was blocked by an auto-mode safety classifier partway through Day-2 research, and the block was explicitly sticky for the remainder of the session. See docs/EXPERIMENT_LOG.md Experiment 4. All five cases below are therefore drawn from the one repository that was already cloned before the block took effect.",
+  "cases": [
+    {
+      "case_id": "tb-1-underscore-dead-import",
+      "repo_id": "nodegoat",
+      "cve": "CVE-2021-23358",
+      "package": "underscore",
+      "version": "1.9.1",
+      "expected_verdict": "NOT_REACHABLE",
+      "risk_classification": "not_a_risk",
+      "vulnerable_component": "template()",
+      "reachable_path": [],
+      "attacker_control": false,
+      "required_conditions": [
+        "template() must be called with an attacker-influenced variable property name -- never happens anywhere in this application"
+      ],
+      "ground_truth_evidence": [
+        { "file": "config/config.js", "lines": "1", "detail": "const _ = require(\"underscore\"); -- the only reference to underscore anywhere in the application's own source." },
+        { "file": "config/config.js", "lines": "1-15", "detail": "The `_` variable is never used anywhere else in this file." }
+      ],
+      "difficulty_category": ["installed_but_unreachable", "dead_unreachable_path"],
+      "ground_truth_notes": "Confirmed via Grep across app/, config/, and server.js: no match for underscore or .template( beyond the single dead require. Exploitability of template() in isolation was not separately re-verified for this case because it is not decision-relevant -- dead code is dead regardless of whether the sink is exploitable in isolation (unlike Day 1, where confirming exploitability was essential because the fixture's entire purpose was to be a REACHABLE case)."
+    },
+    {
+      "case_id": "tb-2-marked-sanitize-bypass",
+      "repo_id": "nodegoat",
+      "cve": "CVE-2016-10531",
+      "package": "marked",
+      "version": "0.3.5",
+      "expected_verdict": "REACHABLE",
+      "risk_classification": "risk",
+      "vulnerable_component": "link URI sanitizer (bypassable via HTML-entity-obfuscated dangerous URI schemes, even when sanitize:true is set)",
+      "reachable_path": [
+        "app/routes/memos.js: addMemos(req, res, next) reads req.body.memo (attacker-controlled HTTP POST body field)",
+        "app/data/memos-dao.js: MemosDAO.insert(memo, ...) stores it verbatim in MongoDB, no validation or sanitization",
+        "app/routes/memos.js: displayMemos(...) retrieves it verbatim via MemosDAO.getAllMemos(...) and passes it to the memos view",
+        "app/views/memos.html:31: {{ marked(doc.memo) }} -- rendered with Swig autoescape explicitly disabled (server.js: swig.setDefaults({ autoescape: false }))"
+      ],
+      "attacker_control": true,
+      "required_conditions": [
+        "marked.setOptions({ sanitize: true }) is set (server.js, confirmed) -- this does NOT block the attack, it is exactly what CVE-2016-10531 bypasses",
+        "attacker-submitted markdown must contain a dangerous URI scheme obfuscated via a malformed/named HTML entity (e.g. a form of 'javascript&#58...;' or 'javascript&colon;')"
+      ],
+      "ground_truth_evidence": [
+        { "file": "server.js", "lines": "124-129", "detail": "marked.setOptions({ sanitize: true }); with the code comment '// Fix for A9 - Insecure Dependencies', immediately followed by app.locals.marked = marked;" },
+        { "file": "server.js", "lines": "135-140", "detail": "swig.setDefaults({ ..., autoescape: false }) -- Swig's own output escaping is globally disabled, so marked's raw HTML output is inserted verbatim." },
+        { "file": "app/views/memos.html", "lines": "28-33", "detail": "{% for doc in memosList %} ... {{ marked(doc.memo) }} -- every stored memo is rendered through marked with no further escaping." },
+        { "file": "app/routes/memos.js", "lines": "10-16", "detail": "addMemos reads req.body.memo directly and passes it to memosDAO.insert with no validation." },
+        { "file": "app/data/memos-dao.js", "lines": "15-23", "detail": "MemosDAO.insert stores the memo field verbatim into the memos MongoDB collection." }
+      ],
+      "difficulty_category": ["direct_reachable_usage", "indirect_usage", "sanitization_precondition_case", "ambiguous_case", "challenging_real_world_case"],
+      "ground_truth_notes": "This is the flagship difficult case. The application's own code comment ('Fix for A9 - Insecure Dependencies') states the developer's belief that sanitize:true resolves the dependency risk. CVE-2016-10531 specifically defeats exactly this setting via HTML-entity-obfuscated URI schemes. A shallow analysis that sees sanitize:true and a comment claiming the issue is fixed would plausibly (and incorrectly) conclude CONDITION_NOT_SATISFIED or even NOT_REACHABLE. The correct REACHABLE verdict requires either already knowing this specific CVE bypasses sanitize:true, or independently testing the sanitizer's actual behavior rather than trusting its configuration and the surrounding comment. Empirically confirmed (see data/advisories/CVE-2016-10531.json): marked('[URL](javascript&#58document;alert(1))') with sanitize:true produces a live <a href> element instead of being stripped, against the exact installed 0.3.5 package."
+    },
+    {
+      "case_id": "tb-3-marked-redos-same-sink",
+      "repo_id": "nodegoat",
+      "cve": "GHSA-p9wx-2529-fp83",
+      "package": "marked",
+      "version": "0.3.5",
+      "expected_verdict": "REACHABLE",
+      "risk_classification": "risk",
+      "vulnerable_component": "unspecified tokenizer regex -- ReDoS class (full advisory mechanism not captured, see data/advisories/GHSA-p9wx-2529-fp83.json)",
+      "reachable_path": [
+        "Identical call site to tb-2-marked-sanitize-bypass: app/routes/memos.js -> app/data/memos-dao.js -> app/views/memos.html:31"
+      ],
+      "attacker_control": true,
+      "required_conditions": [
+        "attacker-submitted markdown content that triggers pathological regex backtracking somewhere in marked's tokenizer -- the specific trigger string was not constructed for this benchmark (see notes)"
+      ],
+      "ground_truth_evidence": [
+        { "file": "app/views/memos.html", "lines": "28-33", "detail": "Same as tb-2 -- same call site, different CVE against the same installed package version." }
+      ],
+      "difficulty_category": ["direct_reachable_usage", "indirect_usage"],
+      "ground_truth_notes": "Deliberately paired with tb-2 to test whether the agent re-investigates each CVE against the same file/package independently rather than reusing a cached verdict from a different CVE on the same package. LOWER CONFIDENCE than tb-2: only the advisory's summary and version range were captured before Day-2 research was cut short (see docs/EXPERIMENT_LOG.md Experiment 4) -- the exact vulnerable regex/mechanism was not identified, and no ReDoS timing PoC was attempted (constructing one is itself a form of exploit development, which the Day-2 instructions ask to avoid). The REACHABLE verdict rests on a confirmed version match (0.3.5 < 0.3.17) plus the independently-confirmed reachability chain, not on a demonstrated trigger input. Flagged explicitly as appropriate for a cautious/lower-confidence agent verdict, not a hard requirement for maximal confidence."
+    },
+    {
+      "case_id": "tb-4-lodash-pure-transitive",
+      "repo_id": "nodegoat",
+      "cve": "CVE-2019-10744",
+      "package": "lodash",
+      "version": "4.17.11",
+      "expected_verdict": "NOT_REACHABLE",
+      "risk_classification": "not_a_risk",
+      "vulnerable_component": "defaultsDeep()",
+      "reachable_path": [],
+      "attacker_control": false,
+      "required_conditions": [],
+      "ground_truth_evidence": [
+        { "file": "package.json", "lines": "1-20", "detail": "lodash is not declared in dependencies or devDependencies at all -- it is a pure transitive dependency of one or more of the declared packages." },
+        { "file": "package-lock.json", "lines": "6584-6586", "detail": "node_modules/lodash resolves to version 4.17.11 -- the exact version independently confirmed exploitable in Day 1 (docs/EXPERIMENT_LOG.md Experiment 1)." }
+      ],
+      "difficulty_category": ["transitive_dependency_context", "installed_but_unreachable"],
+      "ground_truth_notes": "Confirmed via Grep across app/, config/, and server.js: no match for require(\"lodash\") or require('lodash') anywhere in the application's own source, despite npm's flat node_modules layout making it technically require()-able if the app chose to (a 'phantom dependency' risk that was specifically checked for and not found here). This case deliberately scopes reachability to the APPLICATION's own code, not to whether some other installed package's internal implementation happens to call defaultsDeep() on attacker-reachable data -- tracing into every transitive dependency's own implementation is a deeper, more expensive analysis explicitly out of scope for this benchmark, and that scoping decision is stated here rather than left implicit."
+    },
+    {
+      "case_id": "tb-5-minimist-pure-transitive",
+      "repo_id": "nodegoat",
+      "cve": "CVE-2020-7598",
+      "package": "minimist",
+      "version": "0.0.10",
+      "expected_verdict": "NOT_REACHABLE",
+      "risk_classification": "not_a_risk",
+      "vulnerable_component": "setKey()",
+      "reachable_path": [],
+      "attacker_control": false,
+      "required_conditions": [],
+      "ground_truth_evidence": [
+        { "file": "package.json", "lines": "1-20", "detail": "minimist is not declared in dependencies or devDependencies at all -- it is a pure transitive dependency." },
+        { "file": "package-lock.json", "lines": "6877-6879", "detail": "node_modules/minimist resolves to version 0.0.10, which falls in the first of CVE-2020-7598's two disjoint vulnerable ranges (introduced 0, fixed 0.2.1)." }
+      ],
+      "difficulty_category": ["transitive_dependency_context", "installed_but_unreachable"],
+      "ground_truth_notes": "Same scoping rationale as tb-4-lodash-pure-transitive. Confirmed via Grep: no require(\"minimist\") anywhere in application source. Included alongside the lodash case specifically to test whether the agent's conclusion generalizes across two different pure-transitive packages rather than being a fluke of one specific package name."
+    }
+  ],
+  "documented_gaps": [
+    {
+      "category": "reachable_but_condition_absent (as a standalone case, distinct from tb-2's sanitize-bypass framing)",
+      "reason": "No additional real, confirmable example was found before further Bash-based research on this line of work was blocked (see docs/EXPERIMENT_LOG.md Experiment 4). Not force-filled with an invented example."
+    },
+    {
+      "category": "attacker_control_distinction",
+      "reason": "A strong real candidate was identified and partially investigated: app/routes/tutorial.js registers routes via `for (const page of pages) { router.get(`/${page}`, (req,res)=>res.render(`tutorial/${page}`, ...)) }` where `pages` is a hardcoded array -- res.render's argument LOOKS like it comes from user input (a route parameter) but `page` is actually bound from the fixed array at route-registration time, not from req.params. This is exactly the kind of pattern that could fool a shallow reachability check. It was not included because the specific CVE that would make it consequential (swig's arbitrary-local-file-read advisory, GHSA-2rq5-699j-x7p6) could not have its exact affected version range confirmed before the research block took effect. Recorded here for future work rather than discarded silently."
+    }
+  ]
+}
