@@ -36,9 +36,9 @@ function loadManifest() {
 function checkEvidence(repoDir, evidence) {
   const checked = evidence.map((entry) => {
     const candidates = [path.join(repoDir, entry.file), path.resolve(entry.file)];
-    const filePath = candidates.find((c) => fs.existsSync(c));
+    const filePath = candidates.find((c) => fs.existsSync(c) && fs.statSync(c).isFile());
     if (!filePath) {
-      return { ...entry, verified: false, reason: 'file does not exist under any resolution' };
+      return { ...entry, verified: false, reason: 'file does not exist (or is a directory) under any resolution' };
     }
     const lineCount = fs.readFileSync(filePath, 'utf8').split('\n').length;
     const match = String(entry.lines).match(/(\d+)(?:\s*-\s*(\d+))?/);
