@@ -6,14 +6,15 @@
 // this way (no bypassPermissions, custom system prompt, --safe-mode) and
 // what was empirically validated before this was written.
 
-const { spawnSync } = require('child_process');
+const spawnSync = require('cross-spawn').sync;
 const path = require('path');
 const { SYSTEM_PROMPT } = require('./systemPrompt');
 const { buildPrompt } = require('./promptTemplate');
 const schema = require('./schema.json');
 
 function resolveClaudeBinary() {
-  return process.env.CLAUDE_CODE_EXECPATH || 'claude';
+  if (process.env.CLAUDE_CODE_EXECPATH) return process.env.CLAUDE_CODE_EXECPATH;
+  return process.platform === 'win32' ? 'claude.cmd' : 'claude';
 }
 
 // Runs the advanced agent against one fixture directory for one advisory
@@ -28,7 +29,7 @@ function runAdvancedCase(fixtureDir, advisory, options = {}) {
   const model = options.model || 'sonnet';
 
   const args = [
-    '-p', prompt,
+    '-p',
     '--system-prompt', SYSTEM_PROMPT,
     '--safe-mode',
     '--tools', 'Read,Grep,Glob',
@@ -45,6 +46,8 @@ function runAdvancedCase(fixtureDir, advisory, options = {}) {
     encoding: 'utf8',
     maxBuffer: 20 * 1024 * 1024,
     timeout: options.timeoutMs || 180000,
+    cwd: fixtureAbsolutePath,
+    input: prompt,
   });
   const wallClockMs = Date.now() - startedAt;
 

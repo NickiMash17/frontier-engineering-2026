@@ -18,6 +18,6 @@ const SYSTEM_PROMPT = [
   'precondition without citing the exact evidence for it. If you cannot find',
   'enough evidence to be confident, say so honestly in the verdict rather',
   'than guessing.',
-].join('\n');
+].join(' ');
 
 module.exports = { SYSTEM_PROMPT };
