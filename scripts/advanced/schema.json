@@ -34,6 +34,11 @@
         "type": "object",
         "required": ["file", "lines", "detail"],
         "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["file", "search"],
+            "description": "Evidence category. 'file' (default if omitted): a specific file+line location. 'search': a search method (e.g. a repo-wide grep) that supports a negative/absence claim rather than one location -- put the search description in 'file' and 'detail', and 'n/a' in 'lines'."
+          },
           "file": { "type": "string" },
           "lines": { "type": "string" },
           "detail": { "type": "string" }

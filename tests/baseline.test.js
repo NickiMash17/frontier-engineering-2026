@@ -17,10 +17,16 @@ test('isVulnerable handles the real, disjoint minimist ranges correctly', () => 
   assert.equal(isVulnerable('1.2.3', ranges), false, 'fixed boundary is exclusive');
 });
 
-test('advisories index loads and matches the two CVEs this project uses', () => {
+test('advisories index loads and matches the five CVEs this project uses', () => {
   const advisories = loadAdvisories();
   const cves = advisories.map((a) => a.cve).sort();
-  assert.deepEqual(cves, ['CVE-2019-10744', 'CVE-2020-7598']);
+  assert.deepEqual(cves, [
+    'CVE-2016-10531',
+    'CVE-2019-10744',
+    'CVE-2020-7598',
+    'CVE-2021-23358',
+    'GHSA-p9wx-2529-fp83',
+  ]);
 });
 
 test('baseline flags every Tier A fixture as VULNERABLE (it is code-blind by design)', () => {

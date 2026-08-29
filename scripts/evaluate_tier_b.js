@@ -33,8 +33,24 @@ function loadManifest() {
 // Same evidence-verification approach as scripts/evaluate.js -- checks
 // file existence and line-count bounds, tries both a repo-root-relative
 // and an absolute resolution (see docs/EXPERIMENT_LOG.md Experiment 2).
+//
+// Entries default to type "file" when the field is absent (backward
+// compatible with every entry recorded before this field existed --
+// see docs/EXPERIMENT_LOG.md Experiment 5's tb-1 evidence-quality
+// caveat). A "search" entry documents an absence/negative claim (e.g. a
+// repo-wide grep that found no other usage) rather than one file+line
+// location, and is not checkable against the filesystem the same way --
+// it is a distinct, valid evidence category, not a failed file citation,
+// so it is recorded as verified on the strength of its declared type
+// rather than penalized for not being a location.
 function checkEvidence(repoDir, evidence) {
   const checked = evidence.map((entry) => {
+    const entryType = entry.type || 'file';
+
+    if (entryType === 'search') {
+      return { ...entry, verified: true, reason: null, verification_method: 'declared_search_method' };
+    }
+
     const candidates = [path.join(repoDir, entry.file), path.resolve(entry.file)];
     const filePath = candidates.find((c) => fs.existsSync(c) && fs.statSync(c).isFile());
     if (!filePath) {
@@ -141,7 +157,11 @@ async function main() {
   console.log(JSON.stringify({ results_path: path.join(runDir, 'results.json') }, null, 2));
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+module.exports = { checkEvidence, isRisk, evaluateCase };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

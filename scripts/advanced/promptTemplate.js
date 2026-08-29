@@ -40,7 +40,11 @@ function buildPrompt({ fixtureAbsolutePath, advisory }) {
     '"evidence" must cite a real file path (relative to the repository root',
     'above) and a line range you actually read. Do not include any claim in',
     '"reachable_path" or "required_conditions" that is not backed by an',
-    '"evidence" entry.',
+    '"evidence" entry. If a claim is an absence (e.g. "no other file in this',
+    'repository references this package"), mark that entry\'s "type" as',
+    '"search" and describe the search you actually ran (e.g. "repo-wide grep',
+    'for require(\'x\')") in "file" and "detail", with "n/a" in "lines" --',
+    'do not force an absence claim into a fake file+line location.',
   ].join('\n');
 }
 
