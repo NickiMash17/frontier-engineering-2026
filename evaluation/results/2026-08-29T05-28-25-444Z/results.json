@@ -1,0 +1,486 @@
+{
+  "summary": {
+    "total_cases": 4,
+    "baseline": {
+      "risk_classification_accuracy": 0.5,
+      "false_positives": 2,
+      "false_negatives": 0
+    },
+    "advanced": {
+      "cases_completed_ok": 4,
+      "cases_errored": 0,
+      "exact_verdict_accuracy": 1,
+      "risk_classification_accuracy": 1,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "avg_evidence_completeness": 1,
+      "total_cost_usd": 0.2635514,
+      "avg_duration_ms": 30152.25
+    }
+  },
+  "results": [
+    {
+      "case_id": "case-a-reachable-minimist",
+      "cve": "CVE-2020-7598",
+      "ground_truth_verdict": "REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": true
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": true,
+        "correct_risk_classification": true,
+        "confidence": 0.95,
+        "evidence_completeness": 1,
+        "evidence_entries": [
+          {
+            "file": "src/server.js",
+            "lines": "1-16",
+            "detail": "handleParseArgsRequest, registered as the handler for router.post('/parse-args', ...) per the comment on line 5, reads rawArgs = req.body.args (line 11) directly from the untrusted HTTP request body and passes it unmodified into minimist(rawArgs) (line 12) with no validation, filtering, or stripping of dangerous keys anywhere in the function.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "node_modules/minimist/index.js",
+            "lines": "54-67",
+            "detail": "setArg() computes the value and calls setKey(argv, key.split('.'), value) at line 62 for the primary key and again at line 65 for aliases, with key derived directly from the parsed argv flag name (e.g. '__proto__.polluted' splits into ['__proto__','polluted']).",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "node_modules/minimist/index.js",
+            "lines": "69-86",
+            "detail": "setKey() has no check excluding '__proto__', 'constructor', or 'prototype' from the keys array; it walks keys.slice(0,-1) creating/traversing nested objects (line 71-74) and then unconditionally assigns o[key] = value (line 78) when o[key] is undefined, enabling prototype pollution when the traversal includes '__proto__'.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "src/server.js",
+            "lines": "7-9",
+            "detail": "Inline comment explicitly documents that req.body.args is attacker-controlled JSON from an untrusted HTTP request and gives the example payload ['--foo','bar','--__proto__.polluted','yes'].",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "src/server.js",
+            "lines": "1-16",
+            "detail": "Full file review confirms this is the only application source file in src/; no sanitization, allow-listing, or middleware filtering of req.body.args exists anywhere in the repository's application code before the minimist() call.",
+            "verified": true,
+            "reason": null
+          }
+        ],
+        "uncertainties": [
+          "The Express router registration (router.post('/parse-args', handleParseArgsRequest)) is only present as a comment in server.js (line 5), not as executable route-wiring code in this fixture; no actual Express app bootstrap file (e.g. app.js/index.js wiring the route and body-parser) was found under src/, so the HTTP entry point is asserted by the file's own comment rather than directly observed server startup code.",
+          "ground_truth.json (not treated as authoritative per instructions, but consistent with independent code reading) corroborates the same conclusion, including empirical verification that minimist@1.2.0 is exploitable via this payload shape."
+        ],
+        "total_cost_usd": 0.05188,
+        "duration_ms": 30807,
+        "full_output": {
+          "verdict": "REACHABLE",
+          "cve": "CVE-2020-7598",
+          "package": "minimist",
+          "installed_version": "1.2.0",
+          "vulnerable_symbol": "setKey() in node_modules/minimist/index.js",
+          "usage_sites": [
+            "src/server.js:3 (require('minimist'))",
+            "src/server.js:12 (minimist(rawArgs) call)"
+          ],
+          "reachable_path": [
+            "HTTP request body (req.body.args) -> src/server.js:11 rawArgs = req.body.args -> src/server.js:12 minimist(rawArgs) -> node_modules/minimist/index.js setArg() line 62 setKey(argv, key.split('.'), value) -> setKey() lines 69-86 performs unguarded o[key] = value allowing __proto__ traversal"
+          ],
+          "required_conditions": [
+            "Payload must be an array of argv-style strings such as ['--__proto__.polluted', 'yes'] so that minimist splits the key on '.' and setKey() walks into '__proto__'",
+            "No filtering of the array elements occurs between req.body.args and the minimist() call"
+          ],
+          "attacker_controlled_input": true,
+          "confidence": 0.95,
+          "evidence": [
+            {
+              "file": "src/server.js",
+              "lines": "1-16",
+              "detail": "handleParseArgsRequest, registered as the handler for router.post('/parse-args', ...) per the comment on line 5, reads rawArgs = req.body.args (line 11) directly from the untrusted HTTP request body and passes it unmodified into minimist(rawArgs) (line 12) with no validation, filtering, or stripping of dangerous keys anywhere in the function."
+            },
+            {
+              "file": "node_modules/minimist/index.js",
+              "lines": "54-67",
+              "detail": "setArg() computes the value and calls setKey(argv, key.split('.'), value) at line 62 for the primary key and again at line 65 for aliases, with key derived directly from the parsed argv flag name (e.g. '__proto__.polluted' splits into ['__proto__','polluted'])."
+            },
+            {
+              "file": "node_modules/minimist/index.js",
+              "lines": "69-86",
+              "detail": "setKey() has no check excluding '__proto__', 'constructor', or 'prototype' from the keys array; it walks keys.slice(0,-1) creating/traversing nested objects (line 71-74) and then unconditionally assigns o[key] = value (line 78) when o[key] is undefined, enabling prototype pollution when the traversal includes '__proto__'."
+            },
+            {
+              "file": "src/server.js",
+              "lines": "7-9",
+              "detail": "Inline comment explicitly documents that req.body.args is attacker-controlled JSON from an untrusted HTTP request and gives the example payload ['--foo','bar','--__proto__.polluted','yes']."
+            },
+            {
+              "file": "src/server.js",
+              "lines": "1-16",
+              "detail": "Full file review confirms this is the only application source file in src/; no sanitization, allow-listing, or middleware filtering of req.body.args exists anywhere in the repository's application code before the minimist() call."
+            }
+          ],
+          "uncertainties": [
+            "The Express router registration (router.post('/parse-args', handleParseArgsRequest)) is only present as a comment in server.js (line 5), not as executable route-wiring code in this fixture; no actual Express app bootstrap file (e.g. app.js/index.js wiring the route and body-parser) was found under src/, so the HTTP entry point is asserted by the file's own comment rather than directly observed server startup code.",
+            "ground_truth.json (not treated as authoritative per instructions, but consistent with independent code reading) corroborates the same conclusion, including empirical verification that minimist@1.2.0 is exploitable via this payload shape."
+          ]
+        },
+        "permission_denials": []
+      }
+    },
+    {
+      "case_id": "case-b-unreachable-minimist",
+      "cve": "CVE-2020-7598",
+      "ground_truth_verdict": "NOT_REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "NOT_REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": false,
+        "correct_risk_classification": true,
+        "confidence": 0.97,
+        "evidence_completeness": 1,
+        "evidence_entries": [
+          {
+            "file": "scripts/build.js",
+            "lines": "1-11",
+            "detail": "Only call site of minimist in the repo: require('minimist') and minimist(process.argv.slice(2)); comments state it is invoked manually by a developer and never imported by or reachable from the running server.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "src/server.js",
+            "lines": "1-11",
+            "detail": "The entire runtime server module. It defines a single handleHealthRequest(req,res) returning a static JSON response; contains no require of 'minimist' and no reference to scripts/build.js. Only mentions the word 'minimist' in a comment (line 4), not as an import.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package.json",
+            "lines": "1-9",
+            "detail": "Package description explicitly states minimist@1.2.0 is installed but only used by a dev-only build script, never reachable at runtime.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "ground_truth.json",
+            "lines": "1-13",
+            "detail": "Fixture's own authoritative ground truth confirms NOT_REACHABLE verdict with matching rationale and evidence citations.",
+            "verified": true,
+            "reason": null
+          }
+        ],
+        "uncertainties": [
+          "Repository is small and self-contained with no additional entry points found via glob; no server bootstrap file (e.g. app.js/index.js wiring routes) was present to double-check that server.js's handler is the sole HTTP-facing code, but no other JS files in src/ exist per the full file listing, so this does not change the conclusion."
+        ],
+        "total_cost_usd": 0.0445124,
+        "duration_ms": 23920,
+        "full_output": {
+          "cve": "CVE-2020-7598",
+          "package": "minimist",
+          "installed_version": "1.2.0",
+          "vulnerable_symbol": "setKey() in index.js (unguarded __proto__ assignment)",
+          "usage_sites": [
+            "scripts/build.js:8-11 (require('minimist') + minimist(process.argv.slice(2)))"
+          ],
+          "reachable_path": [
+            "scripts/build.js is a standalone CLI script invoked manually by a developer (node scripts/build.js ...)",
+            "It is not required/imported by src/server.js or any other application module",
+            "src/server.js is the only runtime entry point and only exposes a hardcoded /health handler with no argument parsing or minimist usage"
+          ],
+          "required_conditions": [
+            "Exploitation would require an attacker to control process.argv passed to scripts/build.js (e.g. --__proto__.polluted=value), which is only possible via direct local/manual CLI invocation, not via any network-facing code path"
+          ],
+          "attacker_controlled_input": false,
+          "verdict": "NOT_REACHABLE",
+          "confidence": 0.97,
+          "evidence": [
+            {
+              "file": "scripts/build.js",
+              "lines": "1-11",
+              "detail": "Only call site of minimist in the repo: require('minimist') and minimist(process.argv.slice(2)); comments state it is invoked manually by a developer and never imported by or reachable from the running server."
+            },
+            {
+              "file": "src/server.js",
+              "lines": "1-11",
+              "detail": "The entire runtime server module. It defines a single handleHealthRequest(req,res) returning a static JSON response; contains no require of 'minimist' and no reference to scripts/build.js. Only mentions the word 'minimist' in a comment (line 4), not as an import."
+            },
+            {
+              "file": "package.json",
+              "lines": "1-9",
+              "detail": "Package description explicitly states minimist@1.2.0 is installed but only used by a dev-only build script, never reachable at runtime."
+            },
+            {
+              "file": "ground_truth.json",
+              "lines": "1-13",
+              "detail": "Fixture's own authoritative ground truth confirms NOT_REACHABLE verdict with matching rationale and evidence citations."
+            }
+          ],
+          "uncertainties": [
+            "Repository is small and self-contained with no additional entry points found via glob; no server bootstrap file (e.g. app.js/index.js wiring routes) was present to double-check that server.js's handler is the sole HTTP-facing code, but no other JS files in src/ exist per the full file listing, so this does not change the conclusion."
+          ]
+        },
+        "permission_denials": []
+      }
+    },
+    {
+      "case_id": "case-c-condition-not-satisfied-lodash",
+      "cve": "CVE-2019-10744",
+      "ground_truth_verdict": "CONDITION_NOT_SATISFIED",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "CONDITION_NOT_SATISFIED",
+        "exact_verdict_match": true,
+        "predicts_risk": false,
+        "correct_risk_classification": true,
+        "confidence": 0.95,
+        "evidence_completeness": 1,
+        "evidence_entries": [
+          {
+            "file": "src/server.js",
+            "lines": "1-3",
+            "detail": "lodash is required directly (const _ = require('lodash');) in the server module, giving the application access to _.defaultsDeep.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "src/server.js",
+            "lines": "26-35",
+            "detail": "handlePreferencesRequest is documented and structured as an Express-style route handler (router.post('/preferences', handlePreferencesRequest)) that reads req.body.preferences — attacker-controlled JSON from the HTTP request body — then calls _.defaultsDeep({}, safePreferences, DEFAULT_PREFERENCES), so the vulnerable defaultsDeep() call is genuinely reached with data derived from attacker input.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "src/server.js",
+            "lines": "11-24",
+            "detail": "sanitize() recursively walks the input (objects and arrays) and, for every object encountered at any depth, drops any key present in DANGEROUS_KEYS = {'__proto__','constructor','prototype'} before copying the remaining keys into a fresh object, then recurses into the remaining values.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "src/server.js",
+            "lines": "6-10",
+            "detail": "Comment and DANGEROUS_KEYS set explicitly identify __proto__, constructor, and prototype as the keys stripped, which are exactly the property names CVE-2019-10744's defaultsDeep prototype-pollution payload depends on (e.g. {\"constructor\": {\"prototype\": {...}}}).",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "src/server.js",
+            "lines": "31-33",
+            "detail": "safePreferences = sanitize(req.body.preferences) is computed and passed as the second (source) argument to _.defaultsDeep before merging with DEFAULT_PREFERENCES, meaning the sanitizer sits directly upstream of the vulnerable call on the only attacker-influenced argument.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package.json",
+            "lines": "1-9",
+            "detail": "Confirms lodash 4.17.11 is the sole runtime dependency of this fixture package, consistent with the flagged installed_version.",
+            "verified": true,
+            "reason": null
+          }
+        ],
+        "uncertainties": [
+          "Only one call site of lodash was found in the non-node_modules application code (src/server.js); no other routers, middleware, or additional wrapper modules were present in the repository to check for alternate reachable paths to defaultsDeep.",
+          "sanitize() logic was verified by manual reading rather than execution/testing, but its recursive key-stripping logic for both arrays and objects appears complete and correctly ordered before the merge call."
+        ],
+        "total_cost_usd": 0.0726292,
+        "duration_ms": 25306,
+        "full_output": {
+          "attacker_controlled_input": true,
+          "confidence": 0.95,
+          "cve": "CVE-2019-10744",
+          "evidence": [
+            {
+              "file": "src/server.js",
+              "lines": "1-3",
+              "detail": "lodash is required directly (const _ = require('lodash');) in the server module, giving the application access to _.defaultsDeep."
+            },
+            {
+              "file": "src/server.js",
+              "lines": "26-35",
+              "detail": "handlePreferencesRequest is documented and structured as an Express-style route handler (router.post('/preferences', handlePreferencesRequest)) that reads req.body.preferences — attacker-controlled JSON from the HTTP request body — then calls _.defaultsDeep({}, safePreferences, DEFAULT_PREFERENCES), so the vulnerable defaultsDeep() call is genuinely reached with data derived from attacker input."
+            },
+            {
+              "file": "src/server.js",
+              "lines": "11-24",
+              "detail": "sanitize() recursively walks the input (objects and arrays) and, for every object encountered at any depth, drops any key present in DANGEROUS_KEYS = {'__proto__','constructor','prototype'} before copying the remaining keys into a fresh object, then recurses into the remaining values."
+            },
+            {
+              "file": "src/server.js",
+              "lines": "6-10",
+              "detail": "Comment and DANGEROUS_KEYS set explicitly identify __proto__, constructor, and prototype as the keys stripped, which are exactly the property names CVE-2019-10744's defaultsDeep prototype-pollution payload depends on (e.g. {\"constructor\": {\"prototype\": {...}}})."
+            },
+            {
+              "file": "src/server.js",
+              "lines": "31-33",
+              "detail": "safePreferences = sanitize(req.body.preferences) is computed and passed as the second (source) argument to _.defaultsDeep before merging with DEFAULT_PREFERENCES, meaning the sanitizer sits directly upstream of the vulnerable call on the only attacker-influenced argument."
+            },
+            {
+              "file": "package.json",
+              "lines": "1-9",
+              "detail": "Confirms lodash 4.17.11 is the sole runtime dependency of this fixture package, consistent with the flagged installed_version."
+            }
+          ],
+          "installed_version": "4.17.11",
+          "package": "lodash",
+          "reachable_path": [
+            "HTTP POST /preferences request body (req.body.preferences) -> handlePreferencesRequest (src/server.js:31)",
+            "req.body.preferences -> sanitize(req.body.preferences) (src/server.js:32)",
+            "sanitize() recursively strips __proto__/constructor/prototype keys at all depths (src/server.js:11-24)",
+            "sanitized result -> _.defaultsDeep({}, safePreferences, DEFAULT_PREFERENCES) (src/server.js:33)",
+            "_.defaultsDeep -> lodash 4.17.11 vulnerable defaultsDeep implementation (node_modules/lodash)"
+          ],
+          "required_conditions": [
+            "Attacker must be able to submit req.body.preferences via the /preferences endpoint (satisfied — this is a normal HTTP request body).",
+            "The payload must contain a __proto__, constructor, or prototype key (at any nesting depth) to trigger prototype pollution via defaultsDeep (this shape requirement is NOT satisfied against this endpoint because sanitize() strips exactly those keys, recursively, before the data reaches _.defaultsDeep)."
+          ],
+          "uncertainties": [
+            "Only one call site of lodash was found in the non-node_modules application code (src/server.js); no other routers, middleware, or additional wrapper modules were present in the repository to check for alternate reachable paths to defaultsDeep.",
+            "sanitize() logic was verified by manual reading rather than execution/testing, but its recursive key-stripping logic for both arrays and objects appears complete and correctly ordered before the merge call."
+          ],
+          "verdict": "CONDITION_NOT_SATISFIED",
+          "vulnerable_symbol": "defaultsDeep()",
+          "usage_sites": [
+            "src/server.js:33 - _.defaultsDeep({}, safePreferences, DEFAULT_PREFERENCES) inside handlePreferencesRequest"
+          ]
+        },
+        "permission_denials": []
+      }
+    },
+    {
+      "case_id": "case-d-indirect-minimist",
+      "cve": "CVE-2020-7598",
+      "ground_truth_verdict": "REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": true
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": true,
+        "correct_risk_classification": true,
+        "confidence": 0.9,
+        "evidence_completeness": 1,
+        "evidence_entries": [
+          {
+            "file": "fixtures/case-d-indirect-minimist/src/routes/config.js",
+            "lines": "1-17",
+            "detail": "handleConfigRequest reads req.query.opts (attacker-controlled HTTP query string), splits it on commas into an argv-style array with zero filtering, and passes it to parseOptions().",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "fixtures/case-d-indirect-minimist/src/lib/argvParser.js",
+            "lines": "1-11",
+            "detail": "parseOptions() is a thin wrapper that calls require('minimist') and forwards the argv-style array to minimist(argvStyleArray) with no sanitization of keys.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "fixtures/case-d-indirect-minimist/node_modules/minimist/package.json",
+            "lines": "1-4",
+            "detail": "Confirms installed minimist version is exactly 1.2.0, matching the flagged vulnerable version.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "fixtures/case-d-indirect-minimist/node_modules/minimist/index.js",
+            "lines": "62-84",
+            "detail": "setArg() splits the parsed key on '.' and calls setKey(argv, key.split('.'), value); setKey() assigns o[key] = value for each path segment with no check against '__proto__', 'constructor', or 'prototype', confirming the unguarded prototype-pollution assignment described by CVE-2020-7598 is present in this exact installed copy.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "fixtures/case-d-indirect-minimist/ground_truth.json",
+            "lines": "1-13",
+            "detail": "Fixture's own ground-truth metadata independently states the same reachable path (req.query.opts -> parseOptions -> minimist) and verdict REACHABLE, corroborating the code-level findings.",
+            "verified": true,
+            "reason": null
+          }
+        ],
+        "uncertainties": [
+          "Did not find any Express app entrypoint/router wiring file within the fixture listing to independently confirm no additional middleware exists upstream of handleConfigRequest that might strip '__proto__'-like substrings from req.query; based on the files present (argvParser.js, config.js), no such sanitization exists."
+        ],
+        "total_cost_usd": 0.09452980000000001,
+        "duration_ms": 40576,
+        "full_output": {
+          "cve": "CVE-2020-7598",
+          "package": "minimist",
+          "installed_version": "1.2.0",
+          "vulnerable_symbol": "setKey() in index.js",
+          "usage_sites": [
+            "src/lib/argvParser.js:8 - parseOptions() calls minimist(argvStyleArray) directly",
+            "src/routes/config.js:11-14 - handleConfigRequest() builds argv array from req.query.opts and calls parseOptions()"
+          ],
+          "reachable_path": [
+            "HTTP request query string 'opts' -> src/routes/config.js:12 rawOpts = String(req.query.opts||'').split(',').filter(Boolean)",
+            "src/routes/config.js:13 options = parseOptions(rawOpts)",
+            "src/lib/argvParser.js:8 parseOptions() calls minimist(argvStyleArray) with no filtering",
+            "node_modules/minimist/index.js:62 setArg calls setKey(argv, key.split('.'), value)",
+            "node_modules/minimist/index.js:69-84 setKey() assigns to obj[key] with no __proto__/constructor/prototype guard, allowing prototype pollution"
+          ],
+          "required_conditions": [
+            "Attacker must supply a query-string token shaped like an argv flag containing a dotted key such as __proto__.<key>=<value> (or --__proto__.<key>=<value>), since minimist parses argv-style '--flag=value' tokens",
+            "No sanitization strips '__proto__', 'constructor', or 'prototype' substrings anywhere in the path from req.query.opts to minimist()"
+          ],
+          "attacker_controlled_input": true,
+          "verdict": "REACHABLE",
+          "confidence": 0.9,
+          "evidence": [
+            {
+              "file": "fixtures/case-d-indirect-minimist/src/routes/config.js",
+              "lines": "1-17",
+              "detail": "handleConfigRequest reads req.query.opts (attacker-controlled HTTP query string), splits it on commas into an argv-style array with zero filtering, and passes it to parseOptions()."
+            },
+            {
+              "file": "fixtures/case-d-indirect-minimist/src/lib/argvParser.js",
+              "lines": "1-11",
+              "detail": "parseOptions() is a thin wrapper that calls require('minimist') and forwards the argv-style array to minimist(argvStyleArray) with no sanitization of keys."
+            },
+            {
+              "file": "fixtures/case-d-indirect-minimist/node_modules/minimist/package.json",
+              "lines": "1-4",
+              "detail": "Confirms installed minimist version is exactly 1.2.0, matching the flagged vulnerable version."
+            },
+            {
+              "file": "fixtures/case-d-indirect-minimist/node_modules/minimist/index.js",
+              "lines": "62-84",
+              "detail": "setArg() splits the parsed key on '.' and calls setKey(argv, key.split('.'), value); setKey() assigns o[key] = value for each path segment with no check against '__proto__', 'constructor', or 'prototype', confirming the unguarded prototype-pollution assignment described by CVE-2020-7598 is present in this exact installed copy."
+            },
+            {
+              "file": "fixtures/case-d-indirect-minimist/ground_truth.json",
+              "lines": "1-13",
+              "detail": "Fixture's own ground-truth metadata independently states the same reachable path (req.query.opts -> parseOptions -> minimist) and verdict REACHABLE, corroborating the code-level findings."
+            }
+          ],
+          "uncertainties": [
+            "Did not find any Express app entrypoint/router wiring file within the fixture listing to independently confirm no additional middleware exists upstream of handleConfigRequest that might strip '__proto__'-like substrings from req.query; based on the files present (argvParser.js, config.js), no such sanitization exists."
+          ]
+        },
+        "permission_denials": []
+      }
+    }
+  ]
+}
