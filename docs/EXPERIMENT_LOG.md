@@ -167,3 +167,83 @@ ceiling. See `docs/ARCHITECTURE_DECISIONS.md` ADR-003.
 `docs/CVE_REACHABILITY_PLAN.md` Section 4 criteria -- see the Day-1 report
 delivered alongside this log. Tier B (real-world repos) is the natural
 next step, not a new pipeline role.
+
+---
+
+## Experiment 4 — Tier B research halted by an auto-mode safety classifier
+
+**Hypothesis:** a real-world Tier B benchmark of ~10-16 CVE/repository
+pairs across several repositories could be assembled by (a) searching
+GitHub code search for repos pinning known-vulnerable package versions,
+(b) mining OSV.dev for real CVEs affecting an intentionally-realistic,
+well-known open-source Node.js application, and (c) hand-verifying
+reachability directly against the real source.
+
+**What was actually done, in order:**
+1. GitHub code search (`gh search code`) for repos pinning exact
+   vulnerable `minimist`/`lodash` versions, and for real `lodash`
+   `defaultsDeep()` usage. Unproductive -- legacy code search returned
+   either nothing or mostly noise (monorepo fixtures, minified bundles),
+   not usable real-world application code. `npms.io`'s `depended:`
+   search qualifier (intended to find real dependents of a package) also
+   returned zero results, suggesting that service's index is stale/dead.
+2. GitHub's dependents graph for `minimist` (`/network/dependents`) was
+   fetched directly and parsed. It surfaced mostly tiny, low-star,
+   unrelated personal repositories rather than complex real applications
+   -- not a productive source within a reasonable time budget.
+3. Pivoted to **OWASP/NodeGoat**, a real, OWASP-maintained, intentionally
+   realistic Express/MongoDB/Swig application built for security
+   education, cloned at commit `c5cb68a7084e4ae7dcc60e6a98768720a81841e8`
+   (2023-06-21). This was highly productive: real, still-present
+   vulnerable dependencies (`underscore@1.9.1`, `marked@0.3.5`, plus
+   transitive `lodash@4.17.11` and `minimist@0.0.10`) at genuinely
+   different reachability depths, verified directly against the app's own
+   source via `Grep`/`Read` (not assumed from the CVE description) --
+   details in `evaluation/benchmarks/tier-b/manifest.json`.
+4. While investigating a second real vulnerable-by-design application
+   (DVNA, for repository diversity) to supplement NodeGoat, a `git clone`
+   invocation was **blocked by an auto-mode safety classifier**, with an
+   explicit statement that the block was about accumulated conversation
+   content, not the specific command, and would keep firing for the rest
+   of the session. Per the tool's own instruction not to rework or
+   route around such a block, no further attempt was made to clone
+   additional repositories.
+5. The block turned out to be broader than just "clone a new repo": a
+   subsequent plain `cp -r` (copying an already-legitimately-cloned local
+   directory, no network access at all) was also blocked, and later, even
+   `npm test` -- running this project's own pre-existing, previously
+   unproblematic test suite -- was blocked. Unrelated commands (`git
+   status`, `echo`, `pwd`) continued to work throughout, confirming the
+   block was specific to this line of work, not a general Bash outage.
+
+**Result:** Ground truth for 5 real cases from NodeGoat was authored and
+frozen in `evaluation/benchmarks/tier-b/manifest.json` (Phases 1-3 of the
+Day-2 instructions). The Tier B evaluation harness itself
+(`scripts/evaluate_tier_b.js`) and its manifest-validation tests
+(`tests/tier_b_manifest.test.js`) were written. **None of it has been
+executed.** No baseline run, no advanced-agent run, no evidence
+verification, no failure taxonomy, and no architecture decision exist for
+Tier B as of this entry -- because Bash execution was not available to
+produce them honestly, not because they were skipped by choice.
+
+**Failure/success:** Failure to complete the assignment as scoped, for an
+environmental reason outside the standing architectural process (this is
+not a finding about the CVE-reachability system at all -- it is a
+constraint on this automated session). Recorded plainly rather than
+worked around, per this project's own standing rule against fabricating
+results: better to report an honest partial result than a complete but
+invented one.
+
+**Decision:** No architecture decision can be made for Tier B yet -- there
+is no evidence to base one on. `docs/ARCHITECTURE_DECISIONS.md` ADR-003
+(no additional role justified by Tier A) stands unchanged and unextended.
+
+**Next action:** A human needs to either (a) run
+`evaluation/benchmarks/tier-b/fetch_repos.sh` then
+`node scripts/evaluate_tier_b.js` from a normal (non-auto-mode) session or
+a fresh session, and hand the resulting `evaluation/results-tier-b/*/results.json`
+back for failure-taxonomy analysis, or (b) explicitly ask this session to
+retry now that the immediate research task has stopped, in case the block
+was tied to the specific research actions rather than the whole
+remainder of the conversation as stated. Option (a) is the one the
+classifier's own message points to.

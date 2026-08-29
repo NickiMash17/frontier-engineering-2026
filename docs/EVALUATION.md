@@ -88,3 +88,44 @@ The baseline's two false positives (`case-b`, `case-c`) are the concrete,
 measured version of the project's core claim: a conventional
 version-match scanner flags both, and both are not actionable risks in
 this application's actual code.
+
+## Benchmark: Tier B (real-world CVE/repository pairs)
+
+**Status: ground truth frozen, harness written, execution not yet
+performed.** See `docs/EXPERIMENT_LOG.md` Experiment 4 and
+`docs/TIER_B_REPORT.md` for the full account of why, and for what running
+it next requires.
+
+5 hand-verified real cases, all from one pinned commit of
+OWASP/NodeGoat (a real, intentionally realistic Express/MongoDB/Swig
+application built for security education), frozen in
+`evaluation/benchmarks/tier-b/manifest.json`:
+
+| Case | CVE | Package@version | Expected verdict | Difficulty categories |
+|---|---|---|---|---|
+| `tb-1-underscore-dead-import` | CVE-2021-23358 | `underscore@1.9.1` | `NOT_REACHABLE` | installed-but-unreachable, dead path |
+| `tb-2-marked-sanitize-bypass` | CVE-2016-10531 | `marked@0.3.5` | `REACHABLE` | direct reachable, indirect, sanitization/precondition, ambiguous, challenging |
+| `tb-3-marked-redos-same-sink` | GHSA-p9wx-2529-fp83 | `marked@0.3.5` | `REACHABLE` | direct reachable, indirect (lower-confidence, see manifest notes) |
+| `tb-4-lodash-pure-transitive` | CVE-2019-10744 | `lodash@4.17.11` | `NOT_REACHABLE` | transitive dependency, installed-but-unreachable |
+| `tb-5-minimist-pure-transitive` | CVE-2020-7598 | `minimist@0.0.10` | `NOT_REACHABLE` | transitive dependency, installed-but-unreachable |
+
+Two difficulty categories (reachable-but-condition-absent as a standalone
+case, and attacker-control-distinction) are explicitly documented as gaps
+in the manifest rather than force-filled -- see `manifest.json`'s
+`documented_gaps`.
+
+Methodology matches Tier A (Phase-by-phase account in
+`docs/TIER_B_REPORT.md`): ground truth authored and reviewed before any
+system was run against it, every citation checked against the real pinned
+source, and where the underlying mechanism mattered for the verdict (the
+two `marked` cases), it was independently exercised against the real
+installed package rather than trusted from advisory text alone -- except
+where doing so would mean constructing something closer to a working
+exploit than a mechanism check, which was avoided per this benchmark's
+own instructions.
+
+**No baseline or advanced numbers exist for Tier B.** `scripts/evaluate_tier_b.js`
+was written to run both against the frozen manifest the same way
+`scripts/evaluate.js` does for Tier A, but has not been executed --
+running it (after `evaluation/benchmarks/tier-b/fetch_repos.sh`) is the
+next action, not something this report estimates or infers.
