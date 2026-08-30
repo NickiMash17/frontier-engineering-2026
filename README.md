@@ -37,6 +37,62 @@ attacker-controlled - producing a verdict (`REACHABLE` /
 concrete file-and-line evidence trail that is independently re-verified
 against the filesystem, not trusted from the agent's own claim.
 
+## Screenshots
+
+Every image and clip below is a real, unstaged capture of this repo's own
+frontend loading its own real generated data
+(`frontend/data/generated/*.latest.js`) against the pinned Tier B case
+`tb-2-marked-sanitize-bypass` -- produced by
+[scripts/frontend/capture_media.js](scripts/frontend/capture_media.js)
+via headless Chromium (Playwright, devDependency). Nothing here is a
+mockup.
+
+### In motion
+
+Pipeline Replay (staged reveal, paced by that case's real recorded
+timing) and the signature trace diagram drawing itself in:
+
+<p>
+  <img src="docs/assets/demo-pipeline-replay.gif" width="49%" alt="Pipeline replay demo" />
+  <img src="docs/assets/demo-trace-diagram.gif" width="49%" alt="Trace diagram draw-in demo" />
+</p>
+
+### Every screen, both themes
+
+"Live Trace" (dark) on the left, "Blueprint" (light) on the right -- same
+real data, same components, only the theme toggle changed.
+
+**Landing**
+
+<p>
+  <img src="docs/assets/landing-dark.png" width="49%" alt="Landing screen, dark theme" />
+  <img src="docs/assets/landing-light.png" width="49%" alt="Landing screen, light theme" />
+</p>
+
+**Results Dashboard**
+
+<p>
+  <img src="docs/assets/dashboard-dark.png" width="49%" alt="Results dashboard, dark theme" />
+  <img src="docs/assets/dashboard-light.png" width="49%" alt="Results dashboard, light theme" />
+</p>
+
+**CVE Investigation Detail** (trace diagram + evidence panel -- shows the
+FILE-type citation icon; the SEARCH-type icon is implemented and renders
+identically whenever a run's evidence includes one, but no currently
+recorded run does, so it isn't pictured here)
+
+<p>
+  <img src="docs/assets/case-detail-dark.png" width="49%" alt="Case detail screen, dark theme" />
+  <img src="docs/assets/case-detail-light.png" width="49%" alt="Case detail screen, light theme" />
+</p>
+
+**Baseline vs. Advanced Comparison**
+
+<p>
+  <img src="docs/assets/comparison-dark.png" width="49%" alt="Comparison screen, dark theme" />
+  <img src="docs/assets/comparison-light.png" width="49%" alt="Comparison screen, light theme" />
+</p>
+
 ## 3. Architecture
 
 The advanced system is **one single, unstructured agent** - a headless
@@ -130,6 +186,15 @@ node scripts/frontend/generate_data.js   # writes frontend/data/generated/*.js f
 cd frontend
 npx serve .                              # or: python -m http.server
 # then open the URL it prints
+```
+
+**Regenerate the screenshots/GIFs in the Screenshots section** (requires
+`npx playwright install chromium` once, and `ffmpeg` on `PATH` for the two
+GIFs -- an external tool, not an npm dependency):
+
+```bash
+node scripts/frontend/generate_data.js
+npm run capture-media   # writes docs/assets/*.png and *.gif
 ```
 
 ## 6. Main Failure Mode / Hot Take

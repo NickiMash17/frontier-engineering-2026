@@ -8,6 +8,7 @@ import { formatPercent, formatCost, formatDuration } from '../lib/summary.js';
 import { escapeHtml, neutralBadge, advancedBadgeKind, baselineBadgeKind, verdictBadgeLarge, emptyStateIllustration } from '../lib/format.js';
 import { renderEvidencePanel } from './evidencePanel.js';
 import { renderTraceDiagram, revealAllTraceSteps, traceDiagramWrapClass, flattenReachablePath } from './traceDiagram.js';
+import { renderAmbientBg } from './ambientBg.js';
 
 const TIER_LABELS = { 'tier-a': 'Tier A', 'tier-b': 'Tier B' };
 
@@ -120,7 +121,8 @@ function successfulInvestigation(tier, result) {
       }
     </div>
 
-    <div class="detail-section">
+    <div class="detail-section ambient-host">
+      ${renderAmbientBg()}
       <h2 class="detail-section__title">Evidence</h2>
       ${renderEvidencePanel(advanced.evidence_entries)}
     </div>

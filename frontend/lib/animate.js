@@ -41,3 +41,17 @@ export function animateCountUps(container, formatters, { duration = 600 } = {}) 
     requestAnimationFrame(tick);
   });
 }
+
+// Triggers the CSS transition already defined on .compare-hero__arrow-path
+// (stroke-dashoffset: 90 -> 0) -- same two-rAF pattern as animateBarFills,
+// for the same reason: the browser needs to commit the initial
+// dashoffset:90 paint before the class flip, or the transition never
+// runs.
+export function animateArrowDraw(container) {
+  const paths = container.querySelectorAll('.compare-hero__arrow-path');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      paths.forEach((path) => path.classList.add('is-drawn'));
+    });
+  });
+}

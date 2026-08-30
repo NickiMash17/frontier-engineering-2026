@@ -6,39 +6,21 @@
 import { getSummary, formatPercent, formatCost, formatDuration } from '../lib/summary.js';
 import { escapeHtml, badge, neutralBadge, advancedBadgeKind, baselineBadgeKind, emptyStateIllustration } from '../lib/format.js';
 import { animateBarFills, animateCountUps } from '../lib/animate.js';
+import { renderAccuracyBars } from './accuracyBars.js';
+import { renderAmbientBg } from './ambientBg.js';
 
 const TIER_LABELS = { 'tier-a': 'Tier A', 'tier-b': 'Tier B' };
 
-// Hand-coded SVG bar pair (baseline vs. advanced), real proportions, no
-// charting library. Deliberately accent-vs-muted, not match/mismatch --
-// see the .accuracy-bar-fill comment in styles.css for why.
-function accuracyBars(summary) {
-  const baselinePct = summary.baseline.risk_classification_accuracy;
-  const advancedPct = summary.advanced.risk_classification_accuracy;
-  const bar = (pct, colorVar, label) => `
-    <div class="accuracy-bar-row">
-      <span class="accuracy-bar-row__label">${label}</span>
-      <svg class="accuracy-bar-track" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true">
-        <rect width="100" height="6" rx="3" style="fill: var(--color-border);" />
-        <rect class="accuracy-bar-fill" width="${pct === null ? 0 : Math.round(pct * 100)}" height="6" rx="3" style="fill: ${colorVar};" />
-      </svg>
-      <span class="accuracy-bar-row__value" data-countup="${pct === null ? 0 : pct}" data-countup-kind="percent">${formatPercent(pct)}</span>
-    </div>
-  `;
-  return `
-    <div class="accuracy-bars">
-      ${bar(baselinePct, 'var(--color-text-secondary)', 'Baseline')}
-      ${bar(advancedPct, 'var(--color-accent)', 'Advanced')}
-    </div>
-  `;
-}
-
 function summaryStrip(summary) {
+  const advancedPct = summary.advanced.risk_classification_accuracy;
   return `
     <div class="summary-strip">
       <div class="summary-card card">
         <div class="summary-card__label">Accuracy</div>
-        ${accuracyBars(summary)}
+        <div class="accuracy-hero">
+          <span class="accuracy-hero__value glow-number mono" data-countup="${advancedPct === null ? 0 : advancedPct}" data-countup-kind="percent">${formatPercent(advancedPct)}</span>
+        </div>
+        ${renderAccuracyBars(summary, 'dash')}
         <div class="summary-card__sub">baseline vs. advanced</div>
       </div>
       <div class="summary-card card">
@@ -141,10 +123,13 @@ export function renderDashboard(container, { tier, tierData }) {
   const summary = getSummary(tierData);
 
   container.innerHTML = `
-    <div class="screen">
-      <h1 class="screen-title">Results Dashboard -- ${escapeHtml(TIER_LABELS[tier])}</h1>
-      ${summaryStrip(summary)}
-      ${caseTable(tier, tierData.results)}
+    <div class="ambient-host">
+      ${renderAmbientBg()}
+      <div class="screen">
+        <h1 class="screen-title">Results Dashboard -- ${escapeHtml(TIER_LABELS[tier])}</h1>
+        ${summaryStrip(summary)}
+        ${caseTable(tier, tierData.results)}
+      </div>
     </div>
   `;
   attachRowHandlers(container);

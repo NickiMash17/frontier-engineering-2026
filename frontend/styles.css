@@ -460,7 +460,7 @@ a {
 
 .accuracy-bar-track {
   flex: 1;
-  height: 6px;
+  height: 10px;
   display: block;
   overflow: visible;
 }
@@ -510,6 +510,20 @@ a {
 
 .case-row:hover {
   background: var(--color-surface-hover);
+}
+
+/* Left-border accent glow on hover -- reserved (transparent) at rest so
+   the 3px border never shifts layout when it lights up. Lives on the
+   first cell rather than the <tr> itself since border-rendering on table
+   rows is inconsistent across browsers even under border-collapse. */
+.case-row td:first-child {
+  border-left: 3px solid transparent;
+  transition: border-left-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.case-row:hover td:first-child {
+  border-left-color: var(--color-accent);
+  box-shadow: inset 8px 0 14px -10px var(--color-accent);
 }
 
 .case-row:focus-visible {
@@ -673,14 +687,30 @@ a {
   margin-bottom: var(--space-3);
 }
 
+/* Citation is the most load-bearing fact on the card -- bumped a full
+   step above the surrounding text (which sits at --fs-sm) so it reads as
+   primary at a glance, with the prose detail clearly secondary. */
 .evidence-entry__citation {
   color: var(--color-text-primary);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-lg);
 }
 
 .evidence-entry__detail {
   font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
   margin: 0 0 var(--space-3);
+}
+
+.evidence-entry__type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.evidence-type-icon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
 }
 
 .evidence-entry__footer {
@@ -1213,12 +1243,160 @@ a {
 }
 
 /* ====================================================================
+   Final UI round -- ambient cohesion (Screens 3/5/6) + hero moments
+   ==================================================================== */
+
+/* Same ambient network-line motif as the landing hero (components/
+   ambientBg.js), but much fainter and non-pulsing -- quiet texture tying
+   these three data screens back to the product's own visual identity,
+   never competing with the data sitting on top of it. */
+.ambient-host {
+  position: relative;
+}
+
+.ambient-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.ambient-bg__line {
+  stroke: var(--color-trace);
+  stroke-width: 1.2;
+}
+
+.ambient-bg__node {
+  fill: var(--color-trace);
+}
+
+.ambient-bg__group {
+  animation: hero-bg-drift 26s ease-in-out infinite alternate;
+  transform-box: fill-box;
+}
+
+/* Real content always paints above the ambient texture, regardless of
+   DOM order -- every direct child of an ambient-host except the
+   background itself gets lifted into its own stacking context. */
+.ambient-host > *:not(.ambient-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Soft glow behind a hero number, reusing the match/success color --
+   shared by the dashboard's big accuracy figure and the comparison
+   screen's "after" number so the glow language reads as one deliberate
+   effect, not two different ones. */
+.glow-number {
+  color: var(--color-match);
+  text-shadow:
+    0 0 14px color-mix(in srgb, var(--color-match) 55%, transparent),
+    0 0 32px color-mix(in srgb, var(--color-match) 30%, transparent);
+}
+
+.accuracy-hero {
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.accuracy-hero__value {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ====================================================================
+   Screen 6 -- Comparison hero (before -> after headline)
+   ==================================================================== */
+
+.compare-hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-12);
+  margin: var(--space-4) 0 var(--space-8);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+}
+
+.compare-hero__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compare-hero__label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: var(--fw-medium);
+}
+
+.compare-hero__numbers {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.compare-hero__before {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-secondary);
+  font-feature-settings: "tnum" 1;
+}
+
+/* The single largest, most confident number on this screen -- deliberately
+   bigger than the page title above it. */
+.compare-hero__after {
+  font-size: clamp(2.5rem, 6vw, 3.75rem);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  font-feature-settings: "tnum" 1;
+}
+
+.compare-hero__arrow {
+  width: 44px;
+  height: 18px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* Same stroke-dasharray/-dashoffset line-draw technique as the trace
+   diagram's segments (see .trace-segment in this file) -- the arrow
+   draws itself in once on load rather than appearing instantly. */
+.compare-hero__arrow-path {
+  fill: none;
+  stroke: var(--color-match);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 90;
+  stroke-dashoffset: 90;
+  transition: stroke-dashoffset 900ms var(--ease-standard);
+}
+
+.compare-hero__arrow-path.is-drawn {
+  stroke-dashoffset: 0;
+}
+
+/* ====================================================================
    Reduced motion: decorative animation only, never content visibility
    ==================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .hero-trace-bg__group,
   .hero-trace-bg__node--glow,
+  .ambient-bg__group,
   .replay-stage--active,
   .replay-stage--active .replay-stage__dot,
   .case-row--stagger,
@@ -1229,7 +1407,8 @@ a {
   .accuracy-bar-fill,
   .trace-segment,
   .trace-segment--stub,
-  .trace-node {
+  .trace-node,
+  .compare-hero__arrow-path {
     transition: none !important;
   }
 
