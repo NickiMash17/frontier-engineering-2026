@@ -1,0 +1,142 @@
+{
+  "results": [
+    {
+      "case_id": "tb-1-underscore-dead-import",
+      "cve": "CVE-2021-23358",
+      "package": "underscore",
+      "difficulty_category": [
+        "installed_but_unreachable",
+        "dead_unreachable_path"
+      ],
+      "ground_truth_verdict": "NOT_REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": false,
+        "error": "failed to invoke claude CLI: spawnSync claude.cmd EINVAL",
+        "verdict": null,
+        "exact_verdict_match": false,
+        "predicts_risk": null,
+        "correct_risk_classification": null,
+        "confidence": null,
+        "evidence_completeness": null,
+        "evidence_entries": [],
+        "full_output": null
+      }
+    },
+    {
+      "case_id": "tb-2-marked-sanitize-bypass",
+      "cve": "CVE-2016-10531",
+      "package": "marked",
+      "difficulty_category": [
+        "direct_reachable_usage",
+        "indirect_usage",
+        "sanitization_precondition_case",
+        "ambiguous_case",
+        "challenging_real_world_case"
+      ],
+      "ground_truth_verdict": "REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": true
+      },
+      "advanced": {
+        "ok": false,
+        "error": "failed to invoke claude CLI: spawnSync claude.cmd EINVAL",
+        "verdict": null,
+        "exact_verdict_match": false,
+        "predicts_risk": null,
+        "correct_risk_classification": null,
+        "confidence": null,
+        "evidence_completeness": null,
+        "evidence_entries": [],
+        "full_output": null
+      }
+    },
+    {
+      "case_id": "tb-3-marked-redos-same-sink",
+      "cve": "GHSA-p9wx-2529-fp83",
+      "package": "marked",
+      "difficulty_category": [
+        "direct_reachable_usage",
+        "indirect_usage"
+      ],
+      "ground_truth_verdict": "REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": true
+      },
+      "advanced": {
+        "ok": false,
+        "error": "failed to invoke claude CLI: spawnSync claude.cmd EINVAL",
+        "verdict": null,
+        "exact_verdict_match": false,
+        "predicts_risk": null,
+        "correct_risk_classification": null,
+        "confidence": null,
+        "evidence_completeness": null,
+        "evidence_entries": [],
+        "full_output": null
+      }
+    },
+    {
+      "case_id": "tb-4-lodash-pure-transitive",
+      "cve": "CVE-2019-10744",
+      "package": "lodash",
+      "difficulty_category": [
+        "transitive_dependency_context",
+        "installed_but_unreachable"
+      ],
+      "ground_truth_verdict": "NOT_REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": false,
+        "error": "failed to invoke claude CLI: spawnSync claude.cmd EINVAL",
+        "verdict": null,
+        "exact_verdict_match": false,
+        "predicts_risk": null,
+        "correct_risk_classification": null,
+        "confidence": null,
+        "evidence_completeness": null,
+        "evidence_entries": [],
+        "full_output": null
+      }
+    },
+    {
+      "case_id": "tb-5-minimist-pure-transitive",
+      "cve": "CVE-2020-7598",
+      "package": "minimist",
+      "difficulty_category": [
+        "transitive_dependency_context",
+        "installed_but_unreachable"
+      ],
+      "ground_truth_verdict": "NOT_REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": false,
+        "error": "failed to invoke claude CLI: spawnSync claude.cmd EINVAL",
+        "verdict": null,
+        "exact_verdict_match": false,
+        "predicts_risk": null,
+        "correct_risk_classification": null,
+        "confidence": null,
+        "evidence_completeness": null,
+        "evidence_entries": [],
+        "full_output": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,736 @@
+{
+  "results": [
+    {
+      "case_id": "tb-1-underscore-dead-import",
+      "cve": "CVE-2021-23358",
+      "package": "underscore",
+      "difficulty_category": [
+        "installed_but_unreachable",
+        "dead_unreachable_path"
+      ],
+      "ground_truth_verdict": "NOT_REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "NOT_REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": false,
+        "correct_risk_classification": true,
+        "confidence": 0.9,
+        "evidence_completeness": 0.8333333333333334,
+        "evidence_entries": [
+          {
+            "file": "config/config.js",
+            "lines": "1-16",
+            "detail": "The only `require(\"underscore\")` in the entire repository (confirmed via repo-wide grep for require('underscore')). The bound variable `_` is never referenced anywhere else in this 16-line file — no `_.template`, no `_.` method call of any kind appears after the require.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package.json",
+            "lines": "1-24",
+            "detail": "underscore is listed as a direct production dependency (`\"underscore\": \"^1.8.3\"`), confirming it is a first-party app dependency, not merely transitive dev tooling.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "26770-26773",
+            "detail": "Lockfile shows the top-level resolved underscore version is 1.9.1, matching the flagged vulnerable version. Other underscore entries in the lockfile (e.g. lines 13148-13153, 25732-25748) belong to nested devDependency subtrees such as grunt-retire, not app runtime code paths.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "server.js",
+            "lines": "1-17",
+            "detail": "server.js requires express, consolidate, swig, mongodb, marked, etc. — it does not require underscore at all, and does not obtain it indirectly (no `require(\"./config/config\")` re-export of the underscore instance; config.js only exports `config` object at line 15).",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "server.js",
+            "lines": "116-142",
+            "detail": "The view/template engine registered for the app is `consolidate.swig` (line 116) with `app.set(\"view engine\", \"html\")` (line 117) and swig defaults configured at lines 135-142. This is the templating pipeline that actually renders HTML responses to HTTP requests — it is unrelated to underscore's `_.template()`.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "repo-wide grep",
+            "lines": "n/a",
+            "detail": "A repository-wide search for `_.\\w+\\(` across all *.js files (excluding vendor bundles unrelated to underscore) and a separate search for `template(` turned up no call sites in app/routes/*.js, app/data/*.js, or server.js that invoke any underscore method, let alone `_.template()`.",
+            "verified": false,
+            "reason": "file does not exist (or is a directory) under any resolution"
+          }
+        ],
+        "full_output": {
+          "cve": "CVE-2021-23358",
+          "package": "underscore",
+          "installed_version": "1.9.1",
+          "vulnerable_symbol": "template()",
+          "usage_sites": [
+            "config/config.js:1"
+          ],
+          "reachable_path": [],
+          "required_conditions": [
+            "Application code would need to call the underscore `_.template()` function, passing an attacker-influenced string as the `variable` option/argument, for CVE-2021-23358 to be exploitable.",
+            "The templating engine actually wired up in server.js is `swig` via `consolidate.swig` (server.js:116-117), not underscore's template() function."
+          ],
+          "attacker_controlled_input": false,
+          "verdict": "NOT_REACHABLE",
+          "confidence": 0.9,
+          "evidence": [
+            {
+              "file": "config/config.js",
+              "lines": "1-16",
+              "detail": "The only `require(\"underscore\")` in the entire repository (confirmed via repo-wide grep for require('underscore')). The bound variable `_` is never referenced anywhere else in this 16-line file — no `_.template`, no `_.` method call of any kind appears after the require."
+            },
+            {
+              "file": "package.json",
+              "lines": "1-24",
+              "detail": "underscore is listed as a direct production dependency (`\"underscore\": \"^1.8.3\"`), confirming it is a first-party app dependency, not merely transitive dev tooling."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "26770-26773",
+              "detail": "Lockfile shows the top-level resolved underscore version is 1.9.1, matching the flagged vulnerable version. Other underscore entries in the lockfile (e.g. lines 13148-13153, 25732-25748) belong to nested devDependency subtrees such as grunt-retire, not app runtime code paths."
+            },
+            {
+              "file": "server.js",
+              "lines": "1-17",
+              "detail": "server.js requires express, consolidate, swig, mongodb, marked, etc. — it does not require underscore at all, and does not obtain it indirectly (no `require(\"./config/config\")` re-export of the underscore instance; config.js only exports `config` object at line 15)."
+            },
+            {
+              "file": "server.js",
+              "lines": "116-142",
+              "detail": "The view/template engine registered for the app is `consolidate.swig` (line 116) with `app.set(\"view engine\", \"html\")` (line 117) and swig defaults configured at lines 135-142. This is the templating pipeline that actually renders HTML responses to HTTP requests — it is unrelated to underscore's `_.template()`."
+            },
+            {
+              "file": "repo-wide grep",
+              "lines": "n/a",
+              "detail": "A repository-wide search for `_.\\w+\\(` across all *.js files (excluding vendor bundles unrelated to underscore) and a separate search for `template(` turned up no call sites in app/routes/*.js, app/data/*.js, or server.js that invoke any underscore method, let alone `_.template()`."
+            }
+          ],
+          "uncertainties": [
+            "I did not open node_modules (not present/listed under the app path glob) to trace whether some other production dependency (e.g. consolidate, swig, marked) internally calls underscore's template() with attacker data; only the top-level app source tree (app/, config/, server.js) was inspected per the task's reachability-from-application-code framing.",
+            "package-lock.json shows underscore also appears as a transitive dependency of grunt-retire (a devDependency used only by `grunt precommit`/test tooling), which is not part of the running HTTP server and was not further traced since it is build tooling, not request-reachable code."
+          ]
+        },
+        "total_cost_usd": 0.11063459999999999,
+        "duration_ms": 53506,
+        "permission_denials": []
+      }
+    },
+    {
+      "case_id": "tb-2-marked-sanitize-bypass",
+      "cve": "CVE-2016-10531",
+      "package": "marked",
+      "difficulty_category": [
+        "direct_reachable_usage",
+        "indirect_usage",
+        "sanitization_precondition_case",
+        "ambiguous_case",
+        "challenging_real_world_case"
+      ],
+      "ground_truth_verdict": "REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": true
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": true,
+        "correct_risk_classification": true,
+        "confidence": 0.9,
+        "evidence_completeness": 1,
+        "evidence_entries": [
+          {
+            "file": "server.js",
+            "lines": "13,124-129",
+            "detail": "marked is imported and configured with sanitize:true; the same instance is exposed to templates via app.locals.marked.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "server.js",
+            "lines": "135-140",
+            "detail": "swig.setDefaults({ autoescape: false }) -- HTML output from marked is not escaped when injected into the page, so any XSS payload that survives marked's sanitizer executes.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/views/memos.html",
+            "lines": "28-34",
+            "detail": "Template loop iterates docs (memosList) and calls marked(doc.memo) directly, injecting the parsed HTML into the page body for every stored memo.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/routes/memos.js",
+            "lines": "1-17",
+            "detail": "addMemos handler takes req.body.memo directly from the HTTP POST body and passes it unmodified to memosDAO.insert with no sanitization or validation.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/data/memos-dao.js",
+            "lines": "15-24",
+            "detail": "insert() stores the raw memo string verbatim into MongoDB; no transformation, escaping, or key-stripping of the memo content occurs.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/routes/memos.js",
+            "lines": "19-33",
+            "detail": "displayMemos fetches all stored memos via getAllMemos and renders them into the memos.html template as memosList, which is where marked() is later invoked on each stored memo.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/routes/index.js",
+            "lines": "66-67",
+            "detail": "Routes wire GET/POST /memos to displayMemos/addMemos, gated only by isLoggedIn middleware -- confirming the entry point is a normal authenticated HTTP request handler, not internal tooling/tests.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/views/tutorial/a9.html",
+            "lines": "129-168",
+            "detail": "The application's own A9 tutorial page explicitly documents this exact scenario as an intended vulnerable demo, including a payload example using HTML-entity-encoded javascript: scheme (javascript&#58;alert(1&#41;)) submitted through the Memos form.",
+            "verified": true,
+            "reason": null
+          }
+        ],
+        "full_output": {
+          "cve": "CVE-2016-10531",
+          "package": "marked",
+          "installed_version": "0.3.5",
+          "vulnerable_symbol": "marked link URI sanitizer (bypassable when sanitize:true via HTML-entity-obfuscated dangerous URI schemes, e.g. javascript&#58;)",
+          "usage_sites": [
+            "server.js:13 require(\"marked\")",
+            "server.js:126-129 marked.setOptions({sanitize:true}); app.locals.marked = marked;",
+            "app/views/memos.html:31 {{ marked(doc.memo) }}"
+          ],
+          "reachable_path": [
+            "External attacker (authenticated, logged-in user) sends HTTP POST /memos with body field 'memo' containing a Markdown link using an HTML-entity-encoded dangerous scheme, e.g. [x](javascript&#58;alert(1))",
+            "app/routes/index.js:67 routes POST /memos to memosHandler.addMemos",
+            "app/routes/memos.js:11-17 addMemos passes req.body.memo unmodified/unsanitized to memosDAO.insert",
+            "app/data/memos-dao.js:15-24 insert stores the raw memo string verbatim into MongoDB with no encoding/validation",
+            "app/routes/memos.js:19-33 displayMemos fetches all memos and renders the 'memos' view passing memosList=docs (raw stored memo strings)",
+            "app/views/memos.html:28-34 template iterates docs and calls marked(doc.memo) directly in output, using the app.locals.marked instance configured at server.js:126-129 with sanitize:true",
+            "server.js:135-137 swig.setDefaults({autoescape:false}) means marked's HTML output (including any bypassed javascript: URI) is emitted into the page unescaped"
+          ],
+          "required_conditions": [
+            "marked must be configured with sanitize:true (confirmed at server.js:126-128) -- this is the exact precondition needed for CVE-2016-10531's bypass to matter (sanitize:true is otherwise expected to block dangerous schemes)",
+            "The attacker must be able to reach POST /memos, which requires being logged in per isLoggedIn middleware (app/routes/index.js:67) -- i.e. an authenticated but otherwise untrusted app user, not just anonymous internet traffic",
+            "The payload must use an ordinary Markdown link syntax with an HTML-entity-encoded dangerous URI scheme (e.g. javascript&#58;alert(1)); no __proto__/constructor/prototype key or other special JS-object shape is required for this CVE",
+            "Downstream HTML output must not be escaped for the bypass to execute as XSS -- confirmed true here since swig.setDefaults({autoescape:false}) at server.js:135-137"
+          ],
+          "attacker_controlled_input": true,
+          "verdict": "REACHABLE",
+          "confidence": 0.9,
+          "evidence": [
+            {
+              "file": "server.js",
+              "lines": "13,124-129",
+              "detail": "marked is imported and configured with sanitize:true; the same instance is exposed to templates via app.locals.marked."
+            },
+            {
+              "file": "server.js",
+              "lines": "135-140",
+              "detail": "swig.setDefaults({ autoescape: false }) -- HTML output from marked is not escaped when injected into the page, so any XSS payload that survives marked's sanitizer executes."
+            },
+            {
+              "file": "app/views/memos.html",
+              "lines": "28-34",
+              "detail": "Template loop iterates docs (memosList) and calls marked(doc.memo) directly, injecting the parsed HTML into the page body for every stored memo."
+            },
+            {
+              "file": "app/routes/memos.js",
+              "lines": "1-17",
+              "detail": "addMemos handler takes req.body.memo directly from the HTTP POST body and passes it unmodified to memosDAO.insert with no sanitization or validation."
+            },
+            {
+              "file": "app/data/memos-dao.js",
+              "lines": "15-24",
+              "detail": "insert() stores the raw memo string verbatim into MongoDB; no transformation, escaping, or key-stripping of the memo content occurs."
+            },
+            {
+              "file": "app/routes/memos.js",
+              "lines": "19-33",
+              "detail": "displayMemos fetches all stored memos via getAllMemos and renders them into the memos.html template as memosList, which is where marked() is later invoked on each stored memo."
+            },
+            {
+              "file": "app/routes/index.js",
+              "lines": "66-67",
+              "detail": "Routes wire GET/POST /memos to displayMemos/addMemos, gated only by isLoggedIn middleware -- confirming the entry point is a normal authenticated HTTP request handler, not internal tooling/tests."
+            },
+            {
+              "file": "app/views/tutorial/a9.html",
+              "lines": "129-168",
+              "detail": "The application's own A9 tutorial page explicitly documents this exact scenario as an intended vulnerable demo, including a payload example using HTML-entity-encoded javascript: scheme (javascript&#58;alert(1&#41;)) submitted through the Memos form."
+            }
+          ],
+          "uncertainties": [
+            "Did not execute the actual marked 0.3.5 source code to line-by-line confirm the specific regex bypass logic for HTML-entity-encoded schemes; relied on the CVE description and the app's own tutorial page (a9.html) which explicitly demonstrates this exact bypass technique against sanitize:true.",
+            "POST /memos requires an authenticated session (isLoggedIn middleware) -- reachability is confirmed for any logged-in application user, not fully anonymous/unauthenticated attackers, though NodeGoat treats any registered user as an 'attacker' persona in its intentionally-vulnerable design."
+          ]
+        },
+        "total_cost_usd": 0.09069980000000001,
+        "duration_ms": 44272,
+        "permission_denials": []
+      }
+    },
+    {
+      "case_id": "tb-3-marked-redos-same-sink",
+      "cve": "GHSA-p9wx-2529-fp83",
+      "package": "marked",
+      "difficulty_category": [
+        "direct_reachable_usage",
+        "indirect_usage"
+      ],
+      "ground_truth_verdict": "REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": true
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": true,
+        "correct_risk_classification": true,
+        "confidence": 0.88,
+        "evidence_completeness": 1,
+        "evidence_entries": [
+          {
+            "file": "server.js",
+            "lines": "13,124-129",
+            "detail": "marked is required (`const marked = require(\"marked\");`), configured with `marked.setOptions({sanitize: true})` (sanitize only strips raw HTML, not a regex/prototype-key filter), and exposed to all swig templates via `app.locals.marked = marked;`.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/routes/memos.js",
+            "lines": "11-17",
+            "detail": "`addMemos` handler takes `req.body.memo` directly from the HTTP POST body with no validation/sanitization and passes it to `memosDAO.insert(req.body.memo, ...)`.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/data/memos-dao.js",
+            "lines": "15-24",
+            "detail": "`insert` stores the raw memo string verbatim (`const memos = { memo, timestamp: new Date() }`) into MongoDB with no length limiting, escaping, or key-shape checks.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/data/memos-dao.js",
+            "lines": "26-35",
+            "detail": "`getAllMemos` retrieves all stored memo documents unmodified for rendering.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/routes/memos.js",
+            "lines": "19-33",
+            "detail": "`displayMemos` fetches all memos via `memosDAO.getAllMemos` and renders the `memos` view with `memosList: docs`, passing the raw attacker-supplied strings straight to the template.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "app/views/memos.html",
+            "lines": "15-19,28-34",
+            "detail": "The `/memos` form posts a `memo` textarea field directly to this handler (`<form action=\"/memos\" method=\"post\">` with `<textarea name=\"memo\">`), and the template loop calls `{{ marked(doc.memo) }}` on every stored memo, invoking the vulnerable marked 0.3.5 parser on fully attacker-controlled, unbounded-length text with no intervening filter.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package.json",
+            "lines": "17",
+            "detail": "Confirms marked pinned at version 0.3.5 as a direct dependency.",
+            "verified": true,
+            "reason": null
+          }
+        ],
+        "full_output": {
+          "attacker_controlled_input": true,
+          "confidence": 0.88,
+          "cve": "GHSA-p9wx-2529-fp83",
+          "evidence": [
+            {
+              "file": "server.js",
+              "lines": "13,124-129",
+              "detail": "marked is required (`const marked = require(\"marked\");`), configured with `marked.setOptions({sanitize: true})` (sanitize only strips raw HTML, not a regex/prototype-key filter), and exposed to all swig templates via `app.locals.marked = marked;`."
+            },
+            {
+              "file": "app/routes/memos.js",
+              "lines": "11-17",
+              "detail": "`addMemos` handler takes `req.body.memo` directly from the HTTP POST body with no validation/sanitization and passes it to `memosDAO.insert(req.body.memo, ...)`."
+            },
+            {
+              "file": "app/data/memos-dao.js",
+              "lines": "15-24",
+              "detail": "`insert` stores the raw memo string verbatim (`const memos = { memo, timestamp: new Date() }`) into MongoDB with no length limiting, escaping, or key-shape checks."
+            },
+            {
+              "file": "app/data/memos-dao.js",
+              "lines": "26-35",
+              "detail": "`getAllMemos` retrieves all stored memo documents unmodified for rendering."
+            },
+            {
+              "file": "app/routes/memos.js",
+              "lines": "19-33",
+              "detail": "`displayMemos` fetches all memos via `memosDAO.getAllMemos` and renders the `memos` view with `memosList: docs`, passing the raw attacker-supplied strings straight to the template."
+            },
+            {
+              "file": "app/views/memos.html",
+              "lines": "15-19,28-34",
+              "detail": "The `/memos` form posts a `memo` textarea field directly to this handler (`<form action=\"/memos\" method=\"post\">` with `<textarea name=\"memo\">`), and the template loop calls `{{ marked(doc.memo) }}` on every stored memo, invoking the vulnerable marked 0.3.5 parser on fully attacker-controlled, unbounded-length text with no intervening filter."
+            },
+            {
+              "file": "package.json",
+              "lines": "17",
+              "detail": "Confirms marked pinned at version 0.3.5 as a direct dependency."
+            }
+          ],
+          "reachable_path": [
+            "HTTP POST /memos body field 'memo' (app/views/memos.html:15-18, form submission) -> app/routes/memos.js:11-17 addMemos handler reads req.body.memo",
+            "app/routes/memos.js:13 -> app/data/memos-dao.js:15-24 MemosDAO.insert stores raw memo string in MongoDB with no modification",
+            "Any client GET /memos -> app/routes/memos.js:19-33 displayMemos -> app/data/memos-dao.js:26-35 getAllMemos retrieves all stored memo strings",
+            "app/views/memos.html:28-34 template iterates memosList and calls marked(doc.memo) for each memo, invoking vulnerable marked 0.3.5 (server.js:13,124-129) on attacker-supplied text"
+          ],
+          "required_conditions": [
+            "Attacker must be able to submit a POST to /memos with a 'memo' field (no authentication restriction observed in the read files beyond an active session, and no input validation, length cap, or sanitization is applied to the memo content)",
+            "Another user (or the attacker themselves) must subsequently view /memos so the stored memo is rendered and marked() is invoked on it",
+            "No __proto__/constructor/prototype-shaped key is required for this ReDoS-class advisory since the vulnerable behavior is regex catastrophic backtracking on the raw markdown text content, not object-key based prototype pollution; marked.setOptions({sanitize:true}) only strips embedded raw HTML tags and does not filter or limit the regex-processed text length/shape"
+          ],
+          "usage_sites": [
+            "server.js:13 (require)",
+            "server.js:124-129 (setOptions + app.locals.marked)",
+            "app/views/memos.html:31 ({{ marked(doc.memo) }})"
+          ],
+          "vulnerable_symbol": "marked() top-level parser function (module-level call marked(text) as exposed via app.locals.marked)",
+          "verdict": "REACHABLE",
+          "package": "marked",
+          "installed_version": "0.3.5",
+          "uncertainties": [
+            "I did not open the actual node_modules/marked/lib/marked.js source to identify the exact regex responsible for the ReDoS (advisory detail was described as unspecified/not captured), so I cannot cite the specific vulnerable regex line, only confirm the reachable call path to marked() with attacker-controlled text.",
+            "I did not verify whether /memos requires an authenticated session (e.g., via session/auth middleware in app/routes/index.js or session.js), which could narrow 'attacker' to 'any registered user' rather than a fully anonymous external actor; this file was not read.",
+            "I did not check for any global body-size limits configured for body-parser in server.js that might cap the length of req.body.memo and thus limit exploitability of a catastrophic-backtracking payload."
+          ]
+        },
+        "total_cost_usd": 0.0786602,
+        "duration_ms": 39922,
+        "permission_denials": []
+      }
+    },
+    {
+      "case_id": "tb-4-lodash-pure-transitive",
+      "cve": "CVE-2019-10744",
+      "package": "lodash",
+      "difficulty_category": [
+        "transitive_dependency_context",
+        "installed_but_unreachable"
+      ],
+      "ground_truth_verdict": "NOT_REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "NOT_REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": false,
+        "correct_risk_classification": true,
+        "confidence": 0.92,
+        "evidence_completeness": 0.7142857142857143,
+        "evidence_entries": [
+          {
+            "file": "package.json",
+            "lines": "7-24",
+            "detail": "Runtime 'dependencies' list for the application does not include lodash at all (bcrypt-nodejs, body-parser, consolidate, csurf, dont-sniff-mimetype, express, express-session, forever, helmet, marked, mongodb, needle, node-esapi, serve-favicon, swig, underscore).",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "1745-1764",
+            "detail": "lodash@4.17.11 is pulled in as a nested dependency of 'cypress' (a devDependency), inside a block already marked dev:true.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "20575-20589",
+            "detail": "The hoisted top-level 'lodash' package-lock entry (version 4.17.11, matching the flagged CVE) is explicitly marked \"dev\": true, confirming it is a devDependency-only transitive package, not part of the runtime dependency graph.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "419-424,4098-4103,4316-4321,4374-4393,4471-4580,4663-4668,10203-10270,15119-15124",
+            "detail": "Every other lodash entry in the lockfile is likewise nested under grunt-*, babel-*, async, or zaproxy packages, all under \"dev\": true subtrees (build/test tooling), none under a production runtime dependency.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "server.js",
+            "lines": "1-17",
+            "detail": "server.js's require() list (express, serve-favicon, body-parser, express-session, consolidate, swig, mongodb, http, marked, ./app/routes, ./config/config) contains no reference to lodash or any wrapper module that could indirectly load it.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "(repo-wide search)",
+            "lines": "n/a",
+            "detail": "A Grep for the literal string 'lodash' across the entire repository tree returned matches only in package-lock.json; a Grep for 'defaultsDeep|_.merge|require(\\'lodash\\')|require(\"lodash\")' returned zero matches anywhere in the repo.",
+            "verified": false,
+            "reason": "file does not exist (or is a directory) under any resolution"
+          },
+          {
+            "file": "(repo listing)",
+            "lines": "n/a",
+            "detail": "Glob for node_modules/** returned no files, confirming no installed copy of lodash exists in the repo cache to trace further, consistent with it being an uninstalled/unused devDependency subtree in this snapshot.",
+            "verified": false,
+            "reason": "file does not exist (or is a directory) under any resolution"
+          }
+        ],
+        "full_output": {
+          "verdict": "NOT_REACHABLE",
+          "cve": "CVE-2019-10744",
+          "package": "lodash",
+          "installed_version": "4.17.11",
+          "vulnerable_symbol": "defaultsDeep()",
+          "usage_sites": [],
+          "reachable_path": [],
+          "required_conditions": [
+            "A payload with a __proto__/constructor/prototype key would need to reach a call to lodash's defaultsDeep() (or merge/defaults family) for the prototype-pollution gadget to trigger — no such call exists anywhere in this repository's application code."
+          ],
+          "attacker_controlled_input": false,
+          "confidence": 0.92,
+          "evidence": [
+            {
+              "file": "package.json",
+              "lines": "7-24",
+              "detail": "Runtime 'dependencies' list for the application does not include lodash at all (bcrypt-nodejs, body-parser, consolidate, csurf, dont-sniff-mimetype, express, express-session, forever, helmet, marked, mongodb, needle, node-esapi, serve-favicon, swig, underscore)."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "1745-1764",
+              "detail": "lodash@4.17.11 is pulled in as a nested dependency of 'cypress' (a devDependency), inside a block already marked dev:true."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "20575-20589",
+              "detail": "The hoisted top-level 'lodash' package-lock entry (version 4.17.11, matching the flagged CVE) is explicitly marked \"dev\": true, confirming it is a devDependency-only transitive package, not part of the runtime dependency graph."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "419-424,4098-4103,4316-4321,4374-4393,4471-4580,4663-4668,10203-10270,15119-15124",
+              "detail": "Every other lodash entry in the lockfile is likewise nested under grunt-*, babel-*, async, or zaproxy packages, all under \"dev\": true subtrees (build/test tooling), none under a production runtime dependency."
+            },
+            {
+              "file": "server.js",
+              "lines": "1-17",
+              "detail": "server.js's require() list (express, serve-favicon, body-parser, express-session, consolidate, swig, mongodb, http, marked, ./app/routes, ./config/config) contains no reference to lodash or any wrapper module that could indirectly load it."
+            },
+            {
+              "file": "(repo-wide search)",
+              "lines": "n/a",
+              "detail": "A Grep for the literal string 'lodash' across the entire repository tree returned matches only in package-lock.json; a Grep for 'defaultsDeep|_.merge|require(\\'lodash\\')|require(\"lodash\")' returned zero matches anywhere in the repo."
+            },
+            {
+              "file": "(repo listing)",
+              "lines": "n/a",
+              "detail": "Glob for node_modules/** returned no files, confirming no installed copy of lodash exists in the repo cache to trace further, consistent with it being an uninstalled/unused devDependency subtree in this snapshot."
+            }
+          ],
+          "uncertainties": [
+            "No node_modules directory is present in this repo cache, so it was not possible to directly inspect an installed lodash module or trace call sites inside cypress/grunt/babel source at the require() level; conclusions about those packages' internal usage rely on package-lock.json dependency-tree metadata (the 'dev': true flags) rather than reading their source.",
+            "If a future or CI-only build step invokes grunt/cypress tasks that somehow pass attacker-influenced data into a lodash defaultsDeep call from within those devDependencies, that would be a supply-chain/build-tooling concern, not an application runtime HTTP-reachable path; this analysis found no evidence of such a path and none of it would be reachable via the running NodeGoat web application's request handling code (app/routes, app/data, server.js)."
+          ]
+        },
+        "total_cost_usd": 0.1124214,
+        "duration_ms": 44407,
+        "permission_denials": []
+      }
+    },
+    {
+      "case_id": "tb-5-minimist-pure-transitive",
+      "cve": "CVE-2020-7598",
+      "package": "minimist",
+      "difficulty_category": [
+        "transitive_dependency_context",
+        "installed_but_unreachable"
+      ],
+      "ground_truth_verdict": "NOT_REACHABLE",
+      "baseline": {
+        "verdict": "VULNERABLE",
+        "predicts_risk": true,
+        "correct_risk_classification": false
+      },
+      "advanced": {
+        "ok": true,
+        "error": null,
+        "verdict": "NOT_REACHABLE",
+        "exact_verdict_match": true,
+        "predicts_risk": false,
+        "correct_risk_classification": true,
+        "confidence": 0.85,
+        "evidence_completeness": 0.7777777777777778,
+        "evidence_entries": [
+          {
+            "file": "package.json",
+            "lines": "1-24",
+            "detail": "Application's direct 'dependencies' list does not include minimist; it includes 'forever' (^2.0.0) among others. No app dependency directly requires minimist.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "6876-6880",
+            "detail": "The only unscoped, non-dev 'node_modules/minimist' entry is version 0.0.10, matching the flagged CVE version.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "12206-12214",
+            "detail": "'node_modules/optimist' (0.6.1) declares a dependency on 'minimist': '~0.0.1', which is the package that pulls in the hoisted 0.0.10 copy.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "856-864",
+            "detail": "'node_modules/broadway/node_modules/optimist' also depends on minimist ~0.0.1, showing optimist (and thus minimist) is reached only via broadway/flatiron-style tooling packages, not app code.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "package-lock.json",
+            "lines": "3103-3111",
+            "detail": "'node_modules/flatiron/node_modules/optimist' likewise depends on minimist ~0.0.1, confirming the chain flatiron -> optimist -> minimist.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "Procfile",
+            "lines": "1-1",
+            "detail": "The only place 'forever' (which transitively pulls in flatiron/broadway/optimist/minimist) is invoked is 'forever -m 5 server.js', a fixed, non-HTTP-derived command line used to daemonize the app process.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "server.js",
+            "lines": "1-157",
+            "detail": "Full server entry point: only requires express, serve-favicon, body-parser, express-session, consolidate, swig, mongodb, http, marked, ./app/routes, ./config/config -- no require of 'minimist', 'optimist', 'forever', 'flatiron', or 'broadway'.",
+            "verified": true,
+            "reason": null
+          },
+          {
+            "file": "(grep across repo)",
+            "lines": "n/a",
+            "detail": "Grep for pattern 'minimist' across the whole repository (excluding node_modules, which is not present/installed in this checkout) matched only package-lock.json, i.e. zero references in any .js source file.",
+            "verified": false,
+            "reason": "file does not exist (or is a directory) under any resolution"
+          },
+          {
+            "file": "(grep across repo)",
+            "lines": "n/a",
+            "detail": "Grep for 'process.argv' and \"require('minimist')\"/'require(\"minimist\")' across the repository returned no matches, confirming no CLI-argument parsing of user input occurs anywhere in app code.",
+            "verified": false,
+            "reason": "file does not exist (or is a directory) under any resolution"
+          }
+        ],
+        "full_output": {
+          "cve": "CVE-2020-7598",
+          "package": "minimist",
+          "installed_version": "0.0.10",
+          "vulnerable_symbol": "setKey() in index.js (unguarded prototype pollution via --__proto__.<key>=<value>)",
+          "usage_sites": [],
+          "reachable_path": [
+            "No application source file (server.js, app/routes/*, app/data/*, config/*) requires or imports 'minimist' directly.",
+            "minimist@0.0.10 only appears in package-lock.json as a transitive dependency: optimist (0.6.1) -> minimist ~0.0.1 (hoisted/resolved to 0.0.10), and optimist is itself a transitive dependency of broadway/flatiron, which are dependencies of 'forever' (a production dependency used only to daemonize the process).",
+            "The only invocation of 'forever' in the repo is via Procfile: './node_modules/.bin/forever -m 5 server.js', which parses a fixed, developer-supplied command line at process-launch time -- not HTTP request data."
+          ],
+          "required_conditions": [
+            "Exploitation of minimist's setKey() prototype pollution requires the vulnerable minimist parser to be called with a crafted CLI-style argument such as '--__proto__.polluted=value', i.e. attacker control over the argv array passed into minimist().",
+            "No code path in this repository passes HTTP-derived data (req.body, req.query, req.params, headers) into a minimist() call anywhere; minimist is never even require()'d by application code."
+          ],
+          "attacker_controlled_input": false,
+          "verdict": "NOT_REACHABLE",
+          "confidence": 0.85,
+          "evidence": [
+            {
+              "file": "package.json",
+              "lines": "1-24",
+              "detail": "Application's direct 'dependencies' list does not include minimist; it includes 'forever' (^2.0.0) among others. No app dependency directly requires minimist."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "6876-6880",
+              "detail": "The only unscoped, non-dev 'node_modules/minimist' entry is version 0.0.10, matching the flagged CVE version."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "12206-12214",
+              "detail": "'node_modules/optimist' (0.6.1) declares a dependency on 'minimist': '~0.0.1', which is the package that pulls in the hoisted 0.0.10 copy."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "856-864",
+              "detail": "'node_modules/broadway/node_modules/optimist' also depends on minimist ~0.0.1, showing optimist (and thus minimist) is reached only via broadway/flatiron-style tooling packages, not app code."
+            },
+            {
+              "file": "package-lock.json",
+              "lines": "3103-3111",
+              "detail": "'node_modules/flatiron/node_modules/optimist' likewise depends on minimist ~0.0.1, confirming the chain flatiron -> optimist -> minimist."
+            },
+            {
+              "file": "Procfile",
+              "lines": "1-1",
+              "detail": "The only place 'forever' (which transitively pulls in flatiron/broadway/optimist/minimist) is invoked is 'forever -m 5 server.js', a fixed, non-HTTP-derived command line used to daemonize the app process."
+            },
+            {
+              "file": "server.js",
+              "lines": "1-157",
+              "detail": "Full server entry point: only requires express, serve-favicon, body-parser, express-session, consolidate, swig, mongodb, http, marked, ./app/routes, ./config/config -- no require of 'minimist', 'optimist', 'forever', 'flatiron', or 'broadway'."
+            },
+            {
+              "file": "(grep across repo)",
+              "lines": "n/a",
+              "detail": "Grep for pattern 'minimist' across the whole repository (excluding node_modules, which is not present/installed in this checkout) matched only package-lock.json, i.e. zero references in any .js source file."
+            },
+            {
+              "file": "(grep across repo)",
+              "lines": "n/a",
+              "detail": "Grep for 'process.argv' and \"require('minimist')\"/'require(\"minimist\")' across the repository returned no matches, confirming no CLI-argument parsing of user input occurs anywhere in app code."
+            }
+          ],
+          "uncertainties": [
+            "node_modules is not present in this repo checkout, so the exact hoisting/resolution that npm would perform (and thus whether optimist truly ends up bound to the 0.0.10 copy vs. a nested one) could not be directly verified by inspecting an installed tree; this was inferred from package-lock.json structure only.",
+            "Could not fully enumerate every consumer of 'optimist'/'broadway'/'flatiron' inside 'forever' internals (those package sources are not vendored in this repo) to triple-confirm none of them ever parses network-derived argv-like data; this is inferred from the packages' well-known purpose (CLI/process management) and the absence of any such usage in this application's own source."
+          ]
+        },
+        "total_cost_usd": 0.1755808,
+        "duration_ms": 86543,
+        "permission_denials": []
+      }
+    }
+  ]
+}
