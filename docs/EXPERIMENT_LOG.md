@@ -7,7 +7,7 @@ back-filled.
 
 ---
 
-## Experiment 1 — Ground-truth calibration failure on minimist@1.2.5
+## Experiment 1  -  Ground-truth calibration failure on minimist@1.2.5
 
 **Hypothesis:** minimist@1.2.5, pinned per GHSA-xvch-5gv4-984h /
 CVE-2021-44906 ("fixed in 1.2.6"), is a genuinely exploitable prototype-
@@ -73,7 +73,7 @@ edited out of the history.
 
 ---
 
-## Experiment 2 — Evidence-completeness checker resolved paths incorrectly
+## Experiment 2  -  Evidence-completeness checker resolved paths incorrectly
 
 **Hypothesis:** every `evidence[].file` the agent cites should resolve to
 a real file under the fixture directory.
@@ -108,7 +108,7 @@ fix and get a clean, honest number.
 
 ---
 
-## Experiment 3 — Full Tier A evaluation (Day-1 gate run)
+## Experiment 3  -  Full Tier A evaluation (Day-1 gate run)
 
 **Hypothesis:** a single, unstructured agentic call (no multi-role
 pipeline) equipped only with Read/Grep/Glob can correctly classify all
@@ -170,7 +170,7 @@ next step, not a new pipeline role.
 
 ---
 
-## Experiment 4 — Tier B research halted by an auto-mode safety classifier
+## Experiment 4  -  Tier B research halted by an auto-mode safety classifier
 
 **Hypothesis:** a real-world Tier B benchmark of ~10-16 CVE/repository
 pairs across several repositories could be assembled by (a) searching
@@ -250,7 +250,7 @@ classifier's own message points to.
 
 ---
 
-## Experiment 5 — Tier B debugging arc and first successful run
+## Experiment 5  -  Tier B debugging arc and first successful run
 
 **Hypothesis:** `scripts/evaluate_tier_b.js`, wired up in Experiment 4 but
 never executed, would run against the frozen manifest and repo cache the

@@ -97,7 +97,7 @@ frontend's data" step that ever exists.
 
 ## 3. Screen-by-Screen Breakdown
 
-### Screen 1 — Landing / Replay Select
+### Screen 1  -  Landing / Replay Select
 
 Not a live scanner (there is no live backend) and not framed as one. It
 lists the real recorded runs available (`Tier A -- 4 cases -- 2026-08-29`,
@@ -110,7 +110,7 @@ that *looks* like it's live-scanning when it's actually replaying a
 static file would quietly violate that even if every number shown is
 real.
 
-### Screen 2 — Investigation View (pipeline stages)
+### Screen 2  -  Investigation View (pipeline stages)
 
 An animated, staged reveal of the real pipeline using the real captured
 timing/cost/verdict data -- not fabricated pacing. Two stages, matching
@@ -130,7 +130,7 @@ Glob → evidence gathered → verdict, using the real per-case
 54s shown over ~2-3s, linearly proportional across cases so relative
 pacing stays honest) rather than an arbitrary fixed animation speed.
 
-### Screen 3 — Results Dashboard
+### Screen 3  -  Results Dashboard
 
 Top-level summary strip: accuracy (baseline vs. advanced), false
 positives, total cost, avg latency -- for whichever tier is selected.
@@ -139,7 +139,7 @@ truth, baseline verdict, advanced verdict, correct/incorrect indicator)
 that links into Screen 4 per row. This is the screen a judge lands on
 after Screen 1's replay selection.
 
-### Screen 4 — CVE Investigation Detail (hero screen)
+### Screen 4  -  CVE Investigation Detail (hero screen)
 
 Per-case deep dive, the flagship screen:
 
@@ -181,7 +181,7 @@ the two are never confused) -- never assume `full_output` or
 `evidence_entries` exist and let a `TypeError` on `null.something` be
 the actual failure mode a judge sees.
 
-### Screen 5 — Evidence Panel
+### Screen 5  -  Evidence Panel
 
 Each evidence entry from `advanced.evidence_entries`, rendered as:
 
@@ -203,7 +203,7 @@ category, not a downgraded or failed `[FILE]` citation. An entry with
 unverified claim being visibly flagged is the entire point of
 independent evidence checking, and hiding it would defeat that.
 
-### Screen 6 — Baseline vs. Advanced Comparison
+### Screen 6  -  Baseline vs. Advanced Comparison
 
 The headline visualization the project's pitch (`docs/PROJECT_SELECTION.md`)
 promised, filled with the real numbers instead of a mockup:
@@ -369,4 +369,4 @@ first if the budget doesn't hold.
 
 ---
 
-HARDENING + FRONTEND PLAN COMPLETE — awaiting review before frontend implementation begins.
+HARDENING + FRONTEND PLAN COMPLETE  -  awaiting review before frontend implementation begins.
