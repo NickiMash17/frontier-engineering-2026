@@ -1,3 +1,5 @@
+© 2026 Nicolette Mashaba. All Rights Reserved. See [LICENSE](LICENSE).
+
 # CVE Reachability - Application-Aware Vulnerability Triage
 
 Frontier Engineering Challenge 2026 submission (individual, online).
