@@ -33,22 +33,30 @@ const STUB_FRACTION = 0.4; // how far the "doesn't connect" stub reaches toward 
 
 // Snake layout: left-to-right on even rows, right-to-left on odd rows,
 // so consecutive nodes are always adjacent (no long jump back to the
-// left edge when wrapping) -- reads as one continuous trace.
+// left edge when wrapping) -- reads as one continuous trace. Rows are
+// balanced (e.g. 5 nodes -> 3-then-2, not 4-then-1) rather than always
+// filling to MAX_COLS except the last row, so wrapping never strands a
+// single node alone on its own row connected only by a plain vertical
+// drop. width/height are derived directly from the positions actually
+// computed below (max coordinate + padding), not a separate formula --
+// the two can no longer drift out of sync with each other because
+// there's only one calculation left to drift from.
 function computeLayout(nodeCount) {
-  const cols = Math.min(nodeCount, MAX_COLS);
-  const rows = Math.ceil(nodeCount / cols);
+  const rows = Math.ceil(nodeCount / MAX_COLS);
+  const colsPerRow = Math.ceil(nodeCount / rows);
   const positions = [];
-  for (let i = 0; i < nodeCount; i += 1) {
-    const row = Math.floor(i / cols);
-    const posInRow = i % cols;
-    const col = row % 2 === 0 ? posInRow : cols - 1 - posInRow;
-    positions.push({ x: PAD + col * COL_W, y: PAD + row * ROW_H });
+  let placed = 0;
+  for (let row = 0; row < rows; row += 1) {
+    const thisRowCount = Math.min(colsPerRow, nodeCount - placed);
+    for (let posInRow = 0; posInRow < thisRowCount; posInRow += 1) {
+      const col = row % 2 === 0 ? posInRow : thisRowCount - 1 - posInRow;
+      positions.push({ x: PAD + col * COL_W, y: PAD + row * ROW_H });
+      placed += 1;
+    }
   }
-  return {
-    positions,
-    width: PAD * 2 + (Math.min(cols, nodeCount) - 1) * COL_W,
-    height: PAD * 2 + (rows - 1) * ROW_H,
-  };
+  const maxX = Math.max(...positions.map((p) => p.x));
+  const maxY = Math.max(...positions.map((p) => p.y));
+  return { positions, width: maxX + PAD, height: maxY + PAD };
 }
 
 function segmentLength(a, b) {
@@ -105,6 +113,22 @@ export function renderTraceDiagram({ steps: rawSteps, verdict }) {
     `);
   }
 
+  // Positioning and the reveal scale-in animation are deliberately on TWO
+  // nested <g> elements, not one. A CSS `transform` property does not
+  // compose with an SVG `transform` presentation attribute on the SAME
+  // element -- per spec, the presentation attribute is just a
+  // lowest-priority implicit style rule, so any stylesheet rule that also
+  // sets `transform` (here, .trace-node's scale-in animation) replaces it
+  // outright rather than stacking with it. Putting `translate(p.x, p.y)`
+  // and the CSS `scale(...)` on the same <g> silently discarded every
+  // node's real position, collapsing all of them toward the transform-
+  // origin near (0,0) -- only the sink's glow stayed visible because it
+  // painted last (DOM order) on top of the same collapsed spot. The outer
+  // <g> here carries ONLY the inline positional transform and is never a
+  // CSS transform selector target; the inner .trace-node <g> carries
+  // ONLY the CSS-driven scale and has no transform attribute of its own,
+  // so the two compose correctly via normal parent/child nesting instead
+  // of colliding on one element.
   const nodes = steps
     .map((step, i) => {
       const p = positions[i];
@@ -112,11 +136,13 @@ export function renderTraceDiagram({ steps: rawSteps, verdict }) {
       const isLastReal = i === lastRealIndex;
       return `
         <g data-trace-node data-index="${i}" ${isLastReal ? 'data-is-last-real="true"' : ''}
-           class="trace-node${isSink ? ' trace-node--sink' : ''}" transform="translate(${p.x}, ${p.y})">
-          <title>${escapeHtml(step)}</title>
-          ${isSink ? '<circle class="trace-node__glow" r="16" />' : ''}
-          <circle class="trace-node__dot" r="${NODE_R}" />
-          <text class="trace-node__label" x="0" y="4" text-anchor="middle">${i + 1}</text>
+           transform="translate(${p.x}, ${p.y})">
+          <g class="trace-node${isSink ? ' trace-node--sink' : ''}">
+            <title>${escapeHtml(step)}</title>
+            ${isSink ? '<circle class="trace-node__glow" r="16" />' : ''}
+            <circle class="trace-node__dot" r="${NODE_R}" />
+            <text class="trace-node__label" x="0" y="4" text-anchor="middle">${i + 1}</text>
+          </g>
         </g>
       `;
     })
@@ -138,9 +164,11 @@ export function renderTraceDiagram({ steps: rawSteps, verdict }) {
         style="stroke-dasharray: ${stubLen} ${len};" />
     `;
     placeholder = `
-      <g data-trace-placeholder class="trace-node trace-node--placeholder" transform="translate(${b.x}, ${b.y})">
-        <title>No confirmed sink -- the trace does not connect</title>
-        <circle class="trace-node__dot trace-node__dot--placeholder" r="${NODE_R}" stroke-dasharray="3,3" />
+      <g data-trace-placeholder transform="translate(${b.x}, ${b.y})">
+        <g class="trace-node trace-node--placeholder">
+          <title>No confirmed sink -- the trace does not connect</title>
+          <circle class="trace-node__dot trace-node__dot--placeholder" r="${NODE_R}" stroke-dasharray="3,3" />
+        </g>
       </g>
     `;
   }
@@ -164,18 +192,24 @@ export function renderTraceDiagram({ steps: rawSteps, verdict }) {
 // that IS the reveal of "this is where it stops." Safe to call
 // repeatedly; revealing an already-revealed index is a no-op.
 export function revealTraceStep(container, index) {
-  const node = container.querySelector(`[data-trace-node][data-index="${index}"]`);
+  // .trace-node--revealed toggles on the INNER <g> (see the comment above
+  // the node markup in renderTraceDiagram) -- the outer [data-trace-node]
+  // <g> only carries the positional transform and is looked up here just
+  // to find its data-index/data-is-last-real, not to have a class added
+  // directly.
+  const outerNode = container.querySelector(`[data-trace-node][data-index="${index}"]`);
+  const innerNode = outerNode ? outerNode.querySelector('.trace-node') : null;
   const segment = container.querySelector(`[data-trace-segment][data-index="${index - 1}"]`);
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       if (segment) segment.classList.add('trace-segment--drawn');
-      if (node) {
-        node.classList.add('trace-node--revealed');
-        if (node.dataset.isLastReal === 'true') {
+      if (innerNode) {
+        innerNode.classList.add('trace-node--revealed');
+        if (outerNode.dataset.isLastReal === 'true') {
           const stub = container.querySelector('[data-trace-stub]');
-          const placeholder = container.querySelector('[data-trace-placeholder]');
+          const placeholderInner = container.querySelector('[data-trace-placeholder] .trace-node');
           if (stub) stub.classList.add('trace-segment--visible');
-          if (placeholder) placeholder.classList.add('trace-node--revealed');
+          if (placeholderInner) placeholderInner.classList.add('trace-node--revealed');
         }
       }
     });
