@@ -1,4 +1,4 @@
-# Project Selection  -  Frontier Engineering Challenge 2026
+# Project Selection - Frontier Engineering Challenge 2026
 
 Status: strategic discovery only. No application code, dependencies, or
 architecture has been implemented as a result of this document. Repository
@@ -9,7 +9,7 @@ state at time of writing: initial commit `606ff69` only.
 ## 1. Competition Objective
 
 Choose one specific, painful, real problem; solve it with agents; prove  - 
-with a fixed benchmark and real numbers  -  that an "advanced" agentic
+with a fixed benchmark and real numbers - that an "advanced" agentic
 solution measurably beats a simple baseline at the same task; make every
 claim reproducible from a clean environment; ship a polished end-to-end
 product and a ≤5-minute demonstration that tells that story.
@@ -22,7 +22,7 @@ good enough that a judge trusts it on sight.
 
 | Criterion | Weight | What actually earns points |
 |---|---|---|
-| Problem & User Value | 15% | A real person with this exact pain, named specifically  -  not "developers" or "businesses" |
+| Problem & User Value | 15% | A real person with this exact pain, named specifically - not "developers" or "businesses" |
 | Agent Solution & Engineering | 30% | Multiple agents *only if each has a non-redundant job*; clear reasoning traces; sound architecture |
 | End-to-End Quality | 20% | It runs, it's fast enough to demo live, the UI explains the system rather than decorating it |
 | Measured Improvement | 15% | A fixed benchmark, run identically against baseline and advanced, real numbers, no cherry-picking |
@@ -33,7 +33,7 @@ good enough that a judge trusts it on sight.
 Quality (20%) are half the score together. This punishes two common
 failure modes: (a) a single well-prompted LLM call dressed up as "agents"
 with no real division of labor, and (b) a working backend with a
-throwaway UI. It also punishes over-engineering  -  a five-agent pipeline
+throwaway UI. It also punishes over-engineering - a five-agent pipeline
 that isn't measurably better than three agents is *worse* engineering, not
 better, under this rubric.
 
@@ -49,32 +49,32 @@ better, under this rubric.
    Reproducibility criteria (30% combined) no matter how good the demo
    looks.
 3. Prefer problems where the **baseline is what the industry already does
-   today**  -  this makes "improves how the task is handled today" a
+   today** - this makes "improves how the task is handled today" a
    literal, defensible claim instead of a rhetorical one.
 4. Prefer problems solvable with **public or self-generated data**, never
    real PII, real patient records, or scraped private data.
 5. Every agent role must be justified by a distinct failure mode it
    catches. If one well-tooled agent can do the job, ship one agent.
 6. Scope every candidate assuming **one person, ~3 days, including
-   evaluation, polish, documentation and video**  -  not 3 days of ideal
+   evaluation, polish, documentation and video** - not 3 days of ideal
    engineering time.
 
 ---
 
-## 4–5. Candidate Problems  -  Full Analysis
+## 4–5. Candidate Problems - Full Analysis
 
-### Candidate 1  -  Reachability-Aware Vulnerability Triage Agent
+### Candidate 1 - Reachability-Aware Vulnerability Triage Agent
 
 1. **Problem:** Security/dependency scanners (`npm audit`, Dependabot,
    Snyk) flag a repo as "vulnerable" the instant a package version matches
-   a known CVE's affected range  -  regardless of whether the app's code
+   a known CVE's affected range - regardless of whether the app's code
    ever calls the vulnerable function, or whether reaching it requires
    conditions that don't hold.
 2. **User:** Application security engineers and backend teams who triage
    dependency-vulnerability alerts and are drowning in low-signal noise.
 3. **Current workflow:** SCA tool opens a ticket per CVE match; a human
    manually opens the code, greps for usage, reads the advisory, and
-   decides "actually exploitable" vs "not reachable"  -  10–30 minutes per
+   decides "actually exploitable" vs "not reachable" - 10–30 minutes per
    ticket, done dozens of times a week on active repos.
 4. **Bottleneck:** The scanners only check "is the package present at a
    vulnerable version," never "is the vulnerable code path reachable from
@@ -85,9 +85,9 @@ better, under this rubric.
    from an entry point to the vulnerable sink, checking preconditions
    stated in the advisory, and then *adversarially re-checking its own
    claim* before asserting "exploitable." That is a multi-step
-   investigation with tool use (search, read, cross-reference)  -  not a
+   investigation with tool use (search, read, cross-reference) - not a
    single prompt.
-6. **Baseline:** Reimplement what current SCA tools do  -  match installed
+6. **Baseline:** Reimplement what current SCA tools do - match installed
    package version against known-vulnerable ranges from a public advisory
    database (OSV/GHSA) and flag every match. No code awareness.
 7. **Advanced solution:** A locator agent finds where the flagged
@@ -108,7 +108,7 @@ better, under this rubric.
    guessing.
 9. **Data:** Public OSV/GHSA advisories and public GitHub repositories
    pinned to exact commit SHAs. No auth, no PII, no licensing issue.
-10. **Demo:** Live "before/after" board  -  "Naive scanner flags 42 issues →
+10. **Demo:** Live "before/after" board - "Naive scanner flags 42 issues →
     agent confirms 9 exploitable, deprioritizes 33 with cited evidence"  - 
     then drill into one case and show the actual call-path evidence a judge
     can verify by opening the linked file.
@@ -122,7 +122,7 @@ better, under this rubric.
     (must degrade to "Uncertain," not guess); large repos blowing the tool-
     call budget (mitigate with a bounded-hop search from the flagged
     symbol outward); vague advisories that don't name a specific function.
-13. **Reproducibility:** Fully reproducible  -  pinned commits, pinned
+13. **Reproducibility:** Fully reproducible - pinned commits, pinned
     advisory IDs, a single script re-clones everything and regenerates the
     metrics table from raw stored agent transcripts.
 14. **Three-day feasibility:** Moderate risk concentrated in Day 1 dataset
@@ -130,14 +130,14 @@ better, under this rubric.
     one ecosystem (npm or PyPI) makes this tractable; timeboxed to a half
     day with a fallback to n=10.
 15. **Differentiation:** Reachability-aware SCA exists commercially
-    (Snyk, Socket.dev, Endor Labs)  -  we do not claim novelty of the
+    (Snyk, Socket.dev, Endor Labs) - we do not claim novelty of the
     *concept*. The differentiation is doing it as a transparent,
     tool-using agentic pipeline with a cited evidence trail and an
     adversarial self-check an individual can build and rigorously
     benchmark in days, against a baseline that is literally what free/
     common tooling does today.
 
-### Candidate 2  -  Accessibility Violation Remediation Agent
+### Candidate 2 - Accessibility Violation Remediation Agent
 
 1. **Problem:** Automated accessibility checkers (axe-core, WAVE) find
    WCAG violations but don't fix them; commercial "fixes" (accessibility
@@ -177,32 +177,32 @@ better, under this rubric.
    fully self-contained, no external data or licensing question.
 10. **Demo:** Live browser view, violation highlighted, agent reasoning
     shown, patch applied, page re-rendered, checker re-run live, violation
-    gone  -  highly visual, no narration needed to prove it worked.
-11. **UI/UX:** Split view  -  rendered page on one side, evidence/reasoning
+    gone - highly visual, no narration needed to prove it worked.
+11. **UI/UX:** Split view - rendered page on one side, evidence/reasoning
     log on the other; before/after WCAG score; per-violation trail
     (detected → localized → patched → verified).
 12. **Failure modes:** Fix technically passes the checker but is
-    semantically wrong (e.g., meaningless alt text)  -  needs a semantic-
+    semantically wrong (e.g., meaningless alt text) - needs a semantic-
     quality check, not just a pass/fail from the checker; patches that fix
     one violation but introduce another; ambiguous cases (decorative vs.
     informative) needing a human-approval gate rather than a forced
     guess.
 13. **Reproducibility:** Fully self-contained (our own demo app + open-
-    source checker)  -  a stranger clones the repo, runs the harness, gets
+    source checker) - a stranger clones the repo, runs the harness, gets
     identical before/after scores with no external dependency.
-14. **Three-day feasibility:** Lowest-risk candidate on this axis  -  no
+14. **Three-day feasibility:** Lowest-risk candidate on this axis - no
     external data sourcing, no third-party API, checker is deterministic
     and fast.
 15. **Differentiation:** Accessibility overlays and static checkers both
     exist; the differentiator is closed-loop, source-level, verified
     remediation (fix is proven by re-running the same checker, not just
-    asserted)  -  directly contrasting with the overlay industry's approach.
+    asserted) - directly contrasting with the overlay industry's approach.
 
-### Candidate 3  -  Production Incident Root-Cause Investigation Agent
+### Candidate 3 - Production Incident Root-Cause Investigation Agent
 
 1. **Problem:** When a service degrades, on-call engineers manually
    correlate logs, metrics, traces, and recent deploys to find the actual
-   root cause  -  a slow, high-stress, error-prone process (MTTR is a
+   root cause - a slow, high-stress, error-prone process (MTTR is a
    universally tracked, universally painful SRE metric).
 2. **User:** On-call SREs/backend engineers during an active incident.
 3. **Current workflow:** Open four different dashboards, eyeball
@@ -214,7 +214,7 @@ better, under this rubric.
    heterogeneous signal streams, then actively searching for
    confirming/disconfirming evidence across those streams, is a genuine
    multi-step investigative process well beyond one prompt.
-6. **Baseline:** Keyword/timestamp correlation  -  surface the log lines and
+6. **Baseline:** Keyword/timestamp correlation - surface the log lines and
    metric anomalies nearest the alert's timestamp, no causal reasoning.
 7. **Advanced solution:** An investigator agent forms hypotheses from the
    alert; an evidence-gatherer agent queries logs/metrics/traces/deploy
@@ -223,10 +223,10 @@ better, under this rubric.
    evidence strength and produces a causal narrative with citations.
 8. **Evaluation:** A synthetic multi-service telemetry generator with
    ~15–20 injected known-root-cause incidents (e.g., a bad deploy, a
-   connection-pool exhaustion, a downstream timeout cascade)  -  since we
+   connection-pool exhaustion, a downstream timeout cascade) - since we
    inject the cause, we have perfect ground truth. Metrics: top-1/top-3
    root-cause accuracy, time-to-diagnosis, evidence-citation accuracy.
-9. **Data:** Fully synthetic, generated by us  -  no sourcing risk, but real
+9. **Data:** Fully synthetic, generated by us - no sourcing risk, but real
    engineering effort to make it non-trivially realistic.
 10. **Demo:** "Detective board" reconstructing an incident timeline live,
     ruling hypotheses in/out with evidence, landing on the true cause.
@@ -241,13 +241,13 @@ better, under this rubric.
     the generator itself is nontrivial infrastructure that must also be
     documented and shipped.
 14. **Three-day feasibility:** Highest engineering overhead of the three
-    finalists  -  building a credible synthetic telemetry generator is real
+    finalists - building a credible synthetic telemetry generator is real
     work *before* any agent work starts.
 15. **Differentiation:** Multi-signal causal correlation with an
     adversarial verification step and a fully-controlled, ground-truth
     benchmark (rare in this space, where most demos are un-evaluated).
 
-### Candidate 4  -  Deployment Change-Risk Assessor
+### Candidate 4 - Deployment Change-Risk Assessor
 
 1. **Problem:** Teams merge PRs without a reliable signal for "how likely
    is this specific change to cause an incident," relying on gut feel or
@@ -264,17 +264,17 @@ better, under this rubric.
    score with justification requires reasoning across code + history, not
    one prompt.
 6. **Baseline:** Static heuristic (lines changed, files touched, "hot
-   file" count)  -  a crude but real current-practice proxy.
+   file" count) - a crude but real current-practice proxy.
 7. **Advanced solution:** Agents that read the diff semantically, cross-
    reference historically risky patterns/files, check test coverage of
    the changed paths, and produce a risk score with rationale.
 8. **Evaluation:** Requires a corpus of historical PRs labeled
-   "caused incident / did not"  -  realistically only available as a
+   "caused incident / did not" - realistically only available as a
    synthetic/labeled construction, which weakens ground-truth credibility.
 9. **Data:** Would need synthetic PR history with fabricated
-   incident-correlation labels  -  the weakest data story of all twelve
+   incident-correlation labels - the weakest data story of all twelve
    candidates.
-10. **Demo:** Risk score + rationale on a PR  -  less visually dramatic than
+10. **Demo:** Risk score + rationale on a PR - less visually dramatic than
     other candidates.
 11. **UI/UX:** A risk badge on a PR view with contributing-factor
     breakdown.
@@ -282,13 +282,13 @@ better, under this rubric.
     high risk of the benchmark being circular (we label what "risky"
     means, then measure whether the agent agrees with our own labels).
 13. **Reproducibility:** Fine mechanically, weak evidentially.
-14. **Three-day feasibility:** Moderate  -  real effort goes into
+14. **Three-day feasibility:** Moderate - real effort goes into
     constructing a defensible labeled corpus, which is exactly the part
     most vulnerable to critique.
 15. **Differentiation:** Overlaps substantially with Candidate 3;
     doesn't clearly stand on its own.
 
-### Candidate 5  -  Invoice / PO Three-Way-Match Discrepancy Investigator
+### Candidate 5 - Invoice / PO Three-Way-Match Discrepancy Investigator
 
 1. **Problem:** Accounts-payable teams manually reconcile invoice, PO, and
    receipt documents to catch billing errors and fraud before paying.
@@ -311,19 +311,19 @@ better, under this rubric.
 8. **Evaluation:** Synthetic invoice/PO/receipt triples (10–20) with known
    injected discrepancy types; measure false-positive queue reduction and
    discrepancy-explanation accuracy.
-9. **Data:** Fully synthetic  -  reasonable to build, no sourcing risk.
+9. **Data:** Fully synthetic - reasonable to build, no sourcing risk.
 10. **Demo:** Solid but functionally "back-office," lower emotional pull.
 11. **UI/UX:** Reconciliation queue with evidence per flagged item.
 12. **Failure modes:** Real-world documents (scanned PDFs, varied
     formats) are messier than anything we can synthesize in 3 days,
     which risks an unrealistically clean benchmark.
-13. **Reproducibility:** Straightforward  -  self-contained synthetic data.
-14. **Three-day feasibility:** High  -  well-scoped, low infra needs.
-15. **Differentiation:** Low  -  this is a heavily automated RPA space
+13. **Reproducibility:** Straightforward - self-contained synthetic data.
+14. **Three-day feasibility:** High - well-scoped, low infra needs.
+15. **Differentiation:** Low - this is a heavily automated RPA space
     already; hard to make it feel distinctive rather than "another
     invoice bot."
 
-### Candidate 6  -  Commercial Lease Abstraction & Renewal-Risk Agent
+### Candidate 6 - Commercial Lease Abstraction & Renewal-Risk Agent
 
 1. **Problem:** Commercial real estate teams manually extract obligations,
    dates, and risk clauses from lease PDFs to track renewal deadlines and
@@ -355,16 +355,16 @@ better, under this rubric.
     misreads with high confidence (dangerous in a legal-adjacent domain).
 13. **Reproducibility:** Fine mechanically; ground-truth credibility is
     the weak point.
-14. **Three-day feasibility:** Moderate  -  synthetic data generation +
+14. **Three-day feasibility:** Moderate - synthetic data generation +
     careful hand-labeling takes real time.
 15. **Differentiation:** Moderate; legal-document abstraction agents are
     a known space.
 
-### Candidate 7  -  Clinical Trial Eligibility Matching Agent
+### Candidate 7 - Clinical Trial Eligibility Matching Agent
 
 1. **Problem:** Matching a patient to eligible clinical trials requires
    reading dense, jargon-heavy eligibility criteria against a patient's
-   full record  -  done manually by research coordinators today.
+   full record - done manually by research coordinators today.
 2. **User:** Clinical trial coordinators / oncology nurse navigators.
 3. **Current workflow:** Manual cross-reference of ClinicalTrials.gov
    criteria against a patient chart.
@@ -383,29 +383,29 @@ better, under this rubric.
    real ClinicalTrials.gov criteria, with 10–20 hand-verified match/
    no-match cases; measure precision/recall vs. baseline.
 9. **Data:** Real trial criteria are public (ClinicalTrials.gov API);
-   patients must be synthetic for compliance  -  a defensible combination,
+   patients must be synthetic for compliance - a defensible combination,
    but assembling and validating it well takes real time.
 10. **Demo:** Emotionally resonant (real patients, real trials context)
     but requires care not to overstate clinical reliability.
 11. **UI/UX:** Patient-to-trial match list with per-criterion
     include/exclude rationale and citations.
-12. **Failure modes:** High stakes if over-trusted  -  must be framed
+12. **Failure modes:** High stakes if over-trusted - must be framed
     explicitly as a coordinator-assist tool, never an autonomous clinical
     decision-maker; compound negated logic is genuinely hard to get
     reliably right.
-13. **Reproducibility:** Reasonable  -  public criteria + a documented
+13. **Reproducibility:** Reasonable - public criteria + a documented
     synthetic-patient generation process.
-14. **Three-day feasibility:** Elevated risk  -  synthetic patient
+14. **Three-day feasibility:** Elevated risk - synthetic patient
     generation, criteria-logic parsing, and careful hand-verified ground
     truth is a lot to build well solo in 3 days.
 15. **Differentiation:** Strong domain resonance, but healthcare-matching
     agents are a well-populated space; also more likely to draw scrutiny
     on responsible-use grounds given the domain's stakes.
 
-### Candidate 8  -  Insurance Claim Denial Appeal Copilot
+### Candidate 8 - Insurance Claim Denial Appeal Copilot
 
 1. **Problem:** Patients/providers whose insurance claims are denied must
-   write an appeal citing policy language and medical necessity  -  a
+   write an appeal citing policy language and medical necessity - a
    process most people find opaque and are ill-equipped to do well.
 2. **User:** Patients or clinic billing staff appealing a denial.
 3. **Current workflow:** Manual letter-writing, often abandoned because
@@ -422,7 +422,7 @@ better, under this rubric.
    clause governing it; an evidence-gatherer agent assembles supporting
    documentation; a drafting agent writes a targeted, citation-backed
    appeal.
-8. **Evaluation:** This is the candidate's fatal weakness  -  "did the
+8. **Evaluation:** This is the candidate's fatal weakness - "did the
    appeal succeed" ground truth requires a real payer decision, which we
    cannot obtain or simulate credibly. Any benchmark we build is
    necessarily a proxy (e.g., "does it cite the correct policy clause"),
@@ -431,12 +431,12 @@ better, under this rubric.
    legally; synthetic denials are buildable but the eval-strength problem
    above remains regardless of data quality.
 10. **Demo:** Emotionally the most compelling story of all twelve
-    candidates  -  but emotional resonance cannot substitute for the
+    candidates - but emotional resonance cannot substitute for the
     Measured Improvement criterion (15% of score).
 11. **UI/UX:** Denial reason mapped to policy clause mapped to drafted
     appeal, each with citations.
 12. **Failure modes:** Overpromising outcome ("this will win your appeal")
-    when we cannot actually validate real-world success rates  -  a
+    when we cannot actually validate real-world success rates - a
     responsible-use concern as well as an evaluation-strength one.
 13. **Reproducibility:** Fine mechanically, weak evidentially for the same
     reason as #9.
@@ -447,7 +447,7 @@ better, under this rubric.
     high-emotion pain point) undermined by the hardest evaluation problem
     on the list.
 
-### Candidate 9  -  Phishing / BEC Email Investigation Copilot
+### Candidate 9 - Phishing / BEC Email Investigation Copilot
 
 1. **Problem:** Security analysts triage suspicious emails (headers,
    links, sender history) to determine if they're a real phishing/BEC
@@ -472,8 +472,8 @@ better, under this rubric.
 9. **Data:** Usable public corpora exist, but robust link/sender-
    reputation analysis benefits from external APIs (WHOIS, URL
    reputation) which introduces rate limits, possible auth requirements,
-   and non-determinism  -  a reproducibility risk for judges without keys.
-10. **Demo:** Strong  -  a clear "here's the smoking gun in the headers"
+   and non-determinism - a reproducibility risk for judges without keys.
+10. **Demo:** Strong - a clear "here's the smoking gun in the headers"
     narrative.
 11. **UI/UX:** Email viewer annotated with flagged header/link/sender
     evidence, verdict with confidence.
@@ -487,7 +487,7 @@ better, under this rubric.
 15. **Differentiation:** Solid, but sits in a crowded "AI phishing
     detection" space with less distinctive positioning than Candidate 1.
 
-### Candidate 10  -  CI Test Flakiness Root-Cause Agent
+### Candidate 10 - CI Test Flakiness Root-Cause Agent
 
 1. **Problem:** Flaky tests (pass sometimes, fail sometimes with no code
    change) erode trust in CI and waste engineering time re-running builds.
@@ -501,7 +501,7 @@ better, under this rubric.
    forming a root-cause hypothesis (with a way to *test* that hypothesis
    by re-running under controlled conditions) is genuinely investigative.
 6. **Baseline:** Flag the test as "flaky" based on pass/fail variance
-   alone  -  no cause.
+   alone - no cause.
 7. **Advanced solution:** An evidence-gatherer agent collects historical
    run data for the test; a hypothesis agent proposes a cause (race
    condition / ordering / external dependency / unseeded random); a
@@ -512,21 +512,21 @@ better, under this rubric.
    (controllable ground truth, similar strategy to Candidate 3); measure
    root-cause accuracy and time-to-diagnosis vs. baseline's "just flagged
    as flaky."
-9. **Data:** Self-authored  -  low sourcing risk.
+9. **Data:** Self-authored - low sourcing risk.
 10. **Demo:** Good for a developer audience, narrower appeal than security/
     accessibility for a general judging panel.
 11. **UI/UX:** Run-history timeline with hypothesis and confirming/
     refuting evidence per hypothesis.
 12. **Failure modes:** Some flakiness genuinely requires production-scale
-    conditions to reproduce, which a demo suite can't capture  -  mitigated
+    conditions to reproduce, which a demo suite can't capture - mitigated
     by only seeding patterns we can control.
-13. **Reproducibility:** Strong  -  fully self-contained, deterministic
+13. **Reproducibility:** Strong - fully self-contained, deterministic
     seeding.
-14. **Three-day feasibility:** Good  -  narrower scope than Candidates 1–3.
+14. **Three-day feasibility:** Good - narrower scope than Candidates 1–3.
 15. **Differentiation:** Reasonable, but a narrower, more niche audience
     than the top candidates limits User Value score.
 
-### Candidate 11  -  Privacy Data-Flow Compliance Auditor
+### Candidate 11 - Privacy Data-Flow Compliance Auditor
 
 1. **Problem:** Engineering teams claim certain data-handling practices in
    a privacy policy, but nothing verifies that the actual codebase's data
@@ -551,23 +551,23 @@ better, under this rubric.
    buildable, but real data-flow tracing across arbitrary code patterns
    is technically hard to make robust in 3 days without narrowing scope
    drastically (single language, single framework).
-9. **Data:** Self-authored demo codebase + policy  -  low sourcing risk, but
+9. **Data:** Self-authored demo codebase + policy - low sourcing risk, but
    nontrivial to construct convincingly.
 10. **Demo:** Interesting to a compliance-literate judge, less immediately
     graspable to a general audience than the top three.
 11. **UI/UX:** Data-flow graph with policy-claim overlay, contradictions
     highlighted.
-12. **Failure modes:** Scope creep  -  "arbitrary codebase data-flow
+12. **Failure modes:** Scope creep - "arbitrary codebase data-flow
     analysis" is a research-grade static-analysis problem if not tightly
     bounded to one small demo app.
 13. **Reproducibility:** Good if self-contained.
-14. **Three-day feasibility:** Elevated risk  -  the underlying analysis is
+14. **Three-day feasibility:** Elevated risk - the underlying analysis is
     the hardest engineering problem on this list to make genuinely robust,
     not just demo-scripted.
 15. **Differentiation:** Novel combination (policy text + code data-flow),
     but execution risk is high relative to payoff.
 
-### Candidate 12  -  Warranty / Return Fraud Investigation Agent
+### Candidate 12 - Warranty / Return Fraud Investigation Agent
 
 1. **Problem:** Retailers lose money to return/warranty fraud (serial
    returners, mismatched receipts, wardrobing) that simple rule engines
@@ -588,22 +588,22 @@ better, under this rubric.
    cases to a human.
 8. **Evaluation:** Synthetic transaction data with injected fraud/non-
    fraud patterns; precision/recall vs. baseline thresholding.
-9. **Data:** Fully synthetic  -  no sourcing risk, but "fraud" ground truth
+9. **Data:** Fully synthetic - no sourcing risk, but "fraud" ground truth
    is definitionally our own construction, weakening evaluation
    credibility.
-10. **Demo:** Functional but ethically delicate  -  a system that labels
+10. **Demo:** Functional but ethically delicate - a system that labels
     real customers as likely fraudsters requires a careful, cautious
     framing (human-review-required, never auto-deny) to be responsible.
 11. **UI/UX:** Case queue with evidence trail and confidence, human
     approval gate before any action.
 12. **Failure modes:** False accusations carry real customer-harm
-    consequences even in a demo framing  -  must be scoped as decision-
+    consequences even in a demo framing - must be scoped as decision-
     support only, never autonomous action, adding responsible-use
     overhead.
 13. **Reproducibility:** Fine mechanically, weak evidentially (same issue
     as Candidates 4, 6, 8).
 14. **Three-day feasibility:** Good technically.
-15. **Differentiation:** Low  -  lowest novelty and user-value scores of the
+15. **Differentiation:** Low - lowest novelty and user-value scores of the
     twelve; ethically requires the most hedging in framing.
 
 ---
@@ -632,7 +632,7 @@ better, under this rubric.
 `Weighted Score = 0.15×UserValue + 0.30×AgenticDepth + 0.20×avg(Demo/Wow, UI/UX) + 0.15×MeasuredImprovement + 0.15×Reproducibility + 0.05×Novelty`
 
 Engineering Difficulty, Evaluation Strength, and Three-Day Feasibility are
-carried as **gating/risk factors**, not score inputs  -  a high score built
+carried as **gating/risk factors**, not score inputs - a high score built
 on a low-feasibility foundation is a liability, not a strength.
 
 | Rank | Candidate | Weighted Score | 3-Day Feasibility Flag |
@@ -650,7 +650,7 @@ on a low-feasibility foundation is a liability, not a strength.
 | 10 | Lease Abstraction | 6.25 | Ground-truth realism risk |
 | 12 | Warranty/Return Fraud | 5.65 | Ethical framing overhead |
 
-Candidates 1 and 2 are separated by 0.05  -  effectively a statistical tie on
+Candidates 1 and 2 are separated by 0.05 - effectively a statistical tie on
 raw score. The tie-break is decided in Section 7–9 below, not by the table
 alone.
 
@@ -664,9 +664,9 @@ alone.
 
 | Dimension | CVE Reachability Triage | Accessibility Remediation | Incident Root-Cause |
 |---|---|---|---|
-| Is the baseline literally "current industry practice"? | Yes  -  exactly what free SCA tools do | Yes  -  exactly what axe-core/WAVE do | Partially  -  naive correlation is a caricature, not a shipped tool |
-| Does agentic depth feel *necessary*, not decorative? | Yes  -  no single prompt can safely trace a call graph | Mostly  -  a single well-tooled agent could plausibly do more of this than the other two | Yes  -  multi-signal correlation genuinely needs distinct roles |
-| Ground truth quality | Real CVEs, real repos, hand-verified | Self-seeded, deterministic checker  -  cleanest possible | Fully synthetic, self-controlled |
+| Is the baseline literally "current industry practice"? | Yes - exactly what free SCA tools do | Yes - exactly what axe-core/WAVE do | Partially - naive correlation is a caricature, not a shipped tool |
+| Does agentic depth feel *necessary*, not decorative? | Yes - no single prompt can safely trace a call graph | Mostly - a single well-tooled agent could plausibly do more of this than the other two | Yes - multi-signal correlation genuinely needs distinct roles |
+| Ground truth quality | Real CVEs, real repos, hand-verified | Self-seeded, deterministic checker - cleanest possible | Fully synthetic, self-controlled |
 | Data/infra to build before agent work starts | Low (public data, no infra) | Low (build one small demo app) | High (must build a believable telemetry generator) |
 | Demo visual impact | Good (evidence board) | Excellent (live browser transformation, no narration needed) | Excellent (detective timeline) |
 | Reproducibility for a judge with zero setup | Very high (pin commits + advisory IDs) | Highest (fully offline, self-contained) | High but depends on shipping the generator cleanly |
@@ -684,7 +684,7 @@ in order of importance:
 1. **The 30%-weighted criterion favors it more cleanly.** Reachability
    analysis structurally *requires* distinct agent roles (locate → trace →
    check conditions → adversarially verify → synthesize) to be done
-   safely at all  -  a single agent attempting this without that structure
+   safely at all - a single agent attempting this without that structure
    is exactly where hallucinated call paths creep in. The accessibility
    pipeline is equally well justified as multiple agents, but a
    reasonably well-tooled single agent could cover more of that ground
@@ -702,8 +702,8 @@ in order of importance:
 
 Accessibility Remediation is the strongest alternative and carries
 **less three-day execution risk** (Section 6). If reachability analysis
-proves too hard to make robust by the end of Day 1  -  the one real risk
-this plan carries  -  the fallback is to pivot to Accessibility Remediation
+proves too hard to make robust by the end of Day 1 - the one real risk
+this plan carries - the fallback is to pivot to Accessibility Remediation
 rather than push a fragile version of the primary pick; the evaluation
 harness pattern (fixed benchmark, baseline vs. advanced, evidence-cited
 verdicts) transfers directly.
@@ -712,10 +712,10 @@ verdicts) transfers directly.
 
 - **Problem & User Value (15%):** Alert fatigue in dependency-vulnerability
   scanning is a widely and specifically felt pain among application
-  security engineers and backend teams  -  not a vague "developers" claim.
+  security engineers and backend teams - not a vague "developers" claim.
 - **Agent Solution & Engineering (30%):** Five roles, each catching a
   distinct failure mode (missed usage, wrong call path, unchecked
-  precondition, overclaimed reachability, unsynthesized evidence)  -  none
+  precondition, overclaimed reachability, unsynthesized evidence) - none
   redundant, and a single-agent version is demonstrably less trustworthy.
 - **End-to-End Quality (20%):** A working investigation board a judge can
   click through, baseline vs. advanced side by side, live on a real repo.
@@ -724,11 +724,11 @@ verdicts) transfers directly.
   "% of alerts correctly deprioritized without missing a true positive."
 - **Reproducibility (15%):** Pinned commits, pinned advisory IDs, one
   script reproduces everything from a clean clone.
-- **Hot Take (5%):** Presence ≠ exploitability  -  stated above.
+- **Hot Take (5%):** Presence ≠ exploitability - stated above.
 
 ## 10. Baseline Concept
 
-**"Naive SCA" baseline**  -  for each dependency in the target repo, match
+**"Naive SCA" baseline** - for each dependency in the target repo, match
 its installed version against known-vulnerable ranges pulled from OSV/
 GHSA and flag every match as an open issue, with no code awareness
 whatsoever. This is intentionally exactly what free/common tooling does
@@ -739,26 +739,26 @@ practice*, not a strawman.
 
 A five-role pipeline over each baseline-flagged CVE:
 
-- **Locator**  -  searches the target repo for imports/usages of the
+- **Locator** - searches the target repo for imports/usages of the
   flagged package and, where the advisory names one, the specific
   vulnerable symbol.
-- **Path-Tracer**  -  walks the call chain from application entry points
+- **Path-Tracer** - walks the call chain from application entry points
   (HTTP handlers, CLI entry, exported public API) toward the located
   usage, using code-reading/search tools rather than a bespoke static-
   analysis engine.
-- **Condition Analyst**  -  checks any preconditions the advisory states
+- **Condition Analyst** - checks any preconditions the advisory states
   (specific input shape, config flag, feature must be enabled) against
   what the code shows.
-- **Adversary**  -  is explicitly prompted to try to refute the emerging
+- **Adversary** - is explicitly prompted to try to refute the emerging
   reachability claim, forcing the case to survive active skepticism
   before being marked "Reachable."
-- **Synthesizer**  -  emits a verdict (Reachable / Not Reachable /
+- **Synthesizer** - emits a verdict (Reachable / Not Reachable /
   Uncertain), a confidence level, and a cited file:line evidence trail;
   every citation is programmatically checked to actually exist before
   being shown.
 
 Working name for internal use: **REACH** (Reachability-Evidenced Agent for
-CVE Hunting)  -  a placeholder, not a locked-in product identity.
+CVE Hunting) - a placeholder, not a locked-in product identity.
 
 ## 12. Evaluation Strategy
 
@@ -782,9 +782,9 @@ CVE Hunting)  -  a placeholder, not a locked-in product identity.
 
 An **investigation board**: one card per flagged CVE. Collapsed, it shows
 the baseline label and the advanced verdict side by side. Expanded, it
-shows the full evidence timeline  -  advisory text, located usage,
+shows the full evidence timeline - advisory text, located usage,
 call-path graph from entry point to sink, condition-check result,
-adversary transcript, final verdict with confidence  -  every claim
+adversary transcript, final verdict with confidence - every claim
 clickable back to the actual file:line in the repo. A summary header
 shows the headline transformation: *"Naive scanner: 42 flagged → Agent:
 9 confirmed exploitable, 33 deprioritized with evidence, 0 forced
@@ -796,7 +796,7 @@ guesses."*
   truth for 15–20 real CVE/repo pairs is the single biggest time sink and
   the main threat to the whole plan.
 - **Hallucinated call paths** undermining trust in the evidence trail.
-- **Ecosystem/language sprawl**  -  trying to support multiple languages
+- **Ecosystem/language sprawl** - trying to support multiple languages
   dilutes engineering time better spent making one ecosystem robust.
 - **Scope creep into building a general static-analysis engine** instead
   of leaning on agentic, tool-assisted code reading.
@@ -809,17 +809,17 @@ guesses."*
   clearly labeled as a smaller-but-still-real benchmark, rather than
   slipping the schedule.
 - Prefer CVEs that already have public write-ups/PoCs describing
-  reachability conditions  -  this converts "manual verification from
+  reachability conditions - this converts "manual verification from
   scratch" into "verification against an existing credible source,"
   cutting curation time substantially. OSV.dev entries for some
   ecosystems (notably PyPI) also sometimes include affected-symbol
   information directly, which can bootstrap ground truth faster than
-  reading advisory prose alone  -  worth checking first before assuming
+  reading advisory prose alone - worth checking first before assuming
   full manual tracing is required for every case.
 - Scope V1 to a single ecosystem (npm or PyPI, decided once real
   candidate CVEs are scouted) rather than attempting both.
 - Require every displayed evidence citation to be programmatically
-  verified (file exists, line exists) before rendering  -  turns
+  verified (file exists, line exists) before rendering - turns
   hallucination from a silent trust problem into a visible, logged
   failure mode we can report honestly.
 - Build the UI skeleton in parallel with the second agent role, not after
@@ -832,13 +832,13 @@ Opening the demo on a **real, well-known open-source repository** and a
 **real CVE that the judges themselves may recognize**, showing the naive
 scanner's alert count, then watching the agent work through the evidence
 live and land on a verdict a security engineer in the room would actually
-trust enough to act on  -  closing on the baseline-vs-advanced number and
+trust enough to act on - closing on the baseline-vs-advanced number and
 the one-sentence hot take.
 
 ## 17. Hot Take / Insight
 
 **"A vulnerable dependency and an exploitable vulnerability are not the
-same thing  -  and conflating them is why security teams have learned to
+same thing - and conflating them is why security teams have learned to
 ignore their own alerts. An agent that reads code the way a human triager
 actually would (entry point → call chain → sink, then try to prove itself
 wrong) can restore signal to a system that's been crying wolf for years."**
@@ -859,4 +859,4 @@ begins, please confirm:
 
 ---
 
-PROJECT DISCOVERY COMPLETE  -  awaiting human selection.
+PROJECT DISCOVERY COMPLETE - awaiting human selection.
