@@ -162,6 +162,7 @@ presence framing in Section 1, is Nicolette's call to make.
 - [docs/PROJECT_SELECTION.md](docs/PROJECT_SELECTION.md) - why this problem, chosen against 11 other candidates
 - [docs/CVE_REACHABILITY_PLAN.md](docs/CVE_REACHABILITY_PLAN.md) / [docs/DAY1_IMPLEMENTATION_PLAN.md](docs/DAY1_IMPLEMENTATION_PLAN.md) - how the Day-1 system was planned and built
 - [docs/EXPERIMENT_LOG.md](docs/EXPERIMENT_LOG.md) - every experiment, in order, including the two full accounts this changelog summarizes
+- [docs/AGENT_TRAJECTORIES.md](docs/AGENT_TRAJECTORIES.md) - representative real agent trajectories (Tier A, Tier B, and the human-AI debugging arc), required agent-use evidence
 - [docs/EVALUATION.md](docs/EVALUATION.md) - full Tier A and Tier B methodology and results
 - [docs/TIER_B_REPORT.md](docs/TIER_B_REPORT.md) - the primary Tier B technical report
 - [docs/ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md) - every ADR, including ADR-005 (KEEP SINGLE AGENT)
