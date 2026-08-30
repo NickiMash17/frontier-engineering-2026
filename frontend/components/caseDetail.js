@@ -5,19 +5,22 @@
 // in the plan.
 
 import { formatPercent, formatCost, formatDuration } from '../lib/summary.js';
-import { escapeHtml, badge, neutralBadge, advancedBadgeKind, baselineBadgeKind } from '../lib/format.js';
+import { escapeHtml, neutralBadge, advancedBadgeKind, baselineBadgeKind, verdictBadgeLarge, emptyStateIllustration } from '../lib/format.js';
+import { renderEvidencePanel } from './evidencePanel.js';
+import { renderTraceDiagram, revealAllTraceSteps, traceDiagramWrapClass, flattenReachablePath } from './traceDiagram.js';
 
 const TIER_LABELS = { 'tier-a': 'Tier A', 'tier-b': 'Tier B' };
 
 function backLink(tier) {
-  return `<a href="#/dashboard/${tier}" class="back-link">&larr; Back to ${escapeHtml(TIER_LABELS[tier])} dashboard</a>`;
+  return `<a href="#/dashboard/${tier}" class="back-link">← Back to ${escapeHtml(TIER_LABELS[tier])} dashboard</a>`;
 }
 
 function notFound(tier, caseId) {
   return `
     <div class="screen">
       ${backLink(tier)}
-      <div class="card notice">
+      <div class="card notice empty-state">
+        ${emptyStateIllustration()}
         <p>No case named <span class="mono">${escapeHtml(caseId)}</span> in ${escapeHtml(TIER_LABELS[tier])}.</p>
       </div>
     </div>
@@ -34,12 +37,28 @@ function verdictRow(result) {
       </div>
       <div class="verdict-cell">
         <div class="verdict-cell__label">Baseline</div>
-        ${badge(baselineBadgeKind(result.baseline), result.baseline.verdict)}
+        ${verdictBadgeLarge(baselineBadgeKind(result.baseline), result.baseline.verdict)}
       </div>
       <div class="verdict-cell">
         <div class="verdict-cell__label">Advanced</div>
-        ${badge(advancedBadgeKind(result.advanced), advancedLabel)}
+        ${verdictBadgeLarge(advancedBadgeKind(result.advanced), advancedLabel)}
       </div>
+    </div>
+  `;
+}
+
+// The hero visual for this screen: a call-path trace diagram, only when
+// there's a real reachable_path to trace. Placed above the verdict card
+// per spec. Returns '' (nothing) when the path is empty -- that's a real
+// state (e.g. tb-1/tb-4's pure-dead-import cases) with nothing to draw,
+// not a diagram to force.
+function traceSection(result) {
+  if (!result.advanced.ok) return '';
+  const reachablePath = result.advanced.full_output?.reachable_path;
+  if (!Array.isArray(reachablePath) || reachablePath.length === 0) return '';
+  return `
+    <div class="${traceDiagramWrapClass(false)}" data-trace-diagram>
+      ${renderTraceDiagram({ steps: reachablePath, verdict: result.advanced.verdict })}
     </div>
   `;
 }
@@ -73,7 +92,6 @@ function successfulInvestigation(tier, result) {
   const output = advanced.full_output || {};
   const reachablePath = Array.isArray(output.reachable_path) ? output.reachable_path : [];
   const requiredConditions = Array.isArray(output.required_conditions) ? output.required_conditions : [];
-  const evidenceCount = Array.isArray(advanced.evidence_entries) ? advanced.evidence_entries.length : 0;
 
   return `
     <div class="detail-meta-row">
@@ -102,9 +120,9 @@ function successfulInvestigation(tier, result) {
       }
     </div>
 
-    <div class="card notice">
-      <p class="mono">${evidenceCount} evidence entr${evidenceCount === 1 ? 'y' : 'ies'} recorded.</p>
-      <p class="detail-meta">Full evidence panel (Screen 5) not yet built -- see docs/FRONTEND_PLAN.md Section 3.</p>
+    <div class="detail-section">
+      <h2 class="detail-section__title">Evidence</h2>
+      ${renderEvidencePanel(advanced.evidence_entries)}
     </div>
   `;
 }
@@ -114,7 +132,7 @@ export function renderCaseDetail(container, { tier, tierData, caseId }) {
     container.innerHTML = `
       <div class="screen">
         ${backLink(tier)}
-        <div class="card notice"><p>No data loaded for ${escapeHtml(TIER_LABELS[tier])}.</p></div>
+        <div class="card notice empty-state">${emptyStateIllustration()}<p>No data loaded for ${escapeHtml(TIER_LABELS[tier])}.</p></div>
       </div>
     `;
     return;
@@ -138,11 +156,22 @@ export function renderCaseDetail(container, { tier, tierData, caseId }) {
       ${backLink(tier)}
       <div class="detail-header">
         <h1 class="screen-title mono">${escapeHtml(result.cve)}</h1>
-        ${headerRight ? `<span class="mono detail-header__package">${escapeHtml(headerRight)}</span>` : ''}
+        ${headerRight ? `<span class="mono-chip detail-header__package">${escapeHtml(headerRight)}</span>` : ''}
       </div>
       ${difficultyTags(result.difficulty_category)}
+      ${traceSection(result)}
       ${verdictRow(result)}
       ${result.advanced.ok ? successfulInvestigation(tier, result) : failedInvestigation(result.advanced)}
     </div>
   `;
+
+  const traceWrap = container.querySelector('[data-trace-diagram]');
+  if (traceWrap) {
+    // Reveal count must match the FLATTENED node count the diagram
+    // actually rendered, not the raw reachable_path array length -- they
+    // differ whenever an entry embeds its own arrow(s) (see
+    // traceDiagram.js's flattenReachablePath).
+    const flatSteps = flattenReachablePath(result.advanced.full_output.reachable_path);
+    revealAllTraceSteps(traceWrap, flatSteps.length);
+  }
 }
