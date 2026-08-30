@@ -1,80 +1,126 @@
 /*
-  Design tokens only, per docs/FRONTEND_PLAN.md Section 6 ("premium,
-  serious security product" made concrete) -- plus the minimal reset and
-  primitives needed for any screen to use them. No screen-specific layout
-  lives here yet; that comes with each screen in the next phase.
+  Design tokens + shared primitives. Two named themes, both selected
+  explicitly via data-theme on <html> (set synchronously in index.html's
+  head, before first paint) -- never a silent prefers-color-scheme
+  override. Same custom-property names in both; only the values differ,
+  so no component needs to know which theme is active.
 
-  Color is semantic, not decorative: exactly three meanings get a
-  dedicated color (match / mismatch / uncertain-or-unverified), reused
-  everywhere a verdict, a badge, or an evidence-verification state is
-  shown -- never repurposed for anything else.
+  "Live Trace" (dark, default/base :root) -- deep blue-black, unchanged
+  from Round 3.
+  "Blueprint" (light, :root[data-theme="light"]) -- warm paper + deep
+  ink-blue, a genuinely distinct concept, not an inversion of dark.
+
+  The three semantic colors (match/mismatch/uncertain) keep the exact
+  same MEANING in both themes -- only the actual values differ, and
+  nothing else in the UI is allowed to use them for anything else.
+  --color-trace is separate from --color-match starting this round: in
+  "Live Trace" they happen to be the same hue (kept as one token before
+  now); in "Blueprint" the trace diagram's lines/nodes render in the same
+  ink-blue as body text (a schematic, not a green readout), while
+  --color-match/mismatch/uncertain are their own desaturated colors for
+  verdict badges. Two concepts that were coincidentally identical in one
+  theme, genuinely distinct in the other -- hence two tokens.
 */
 
 :root {
-  /* ---- Color: light theme (default) ---- */
-  --color-bg: #f7f8fa;
-  --color-surface: #ffffff;
-  --color-border: #d9dee3;
-  --color-text-primary: #14181f;
-  --color-text-secondary: #5b6572;
-  --color-accent: #2054c9;
+  /* ---- "Live Trace" (dark, default) ---- */
+  --color-bg: #05070a;
+  --color-surface: #0d1420;
+  --color-surface-2: #131d2e; /* second elevation tier -- evidence-row alternation, hover states */
+  --color-surface-hover: #131d2e;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.16);
+  --color-text-primary: #e8e9ea;
+  --color-text-secondary: #7d8590;
+  --color-accent: #6e7bf2;
+  --color-accent-strong: #8891f7;
 
-  /* Semantic states -- the only three colors that carry meaning */
-  --color-match: #1a7f4b;
-  --color-match-bg: #e6f6ec;
-  --color-mismatch: #b3261e;
-  --color-mismatch-bg: #fdecea;
-  --color-uncertain: #9a6b00;
-  --color-uncertain-bg: #fbf1da;
+  /* Trace diagram signal color (lines, node strokes, non-sink glow). */
+  --color-trace: #00e5b0;
+
+  /* Semantic states -- the only three meanings that ever get color. */
+  --color-match: #00e5b0;
+  --color-match-bg: rgba(0, 229, 176, 0.12);
+  --color-match-border: rgba(0, 229, 176, 0.4);
+  --color-mismatch: #ff4d6d;
+  --color-mismatch-bg: rgba(255, 77, 109, 0.12);
+  --color-mismatch-border: rgba(255, 77, 109, 0.4);
+  --color-uncertain: #ffb84d;
+  --color-uncertain-bg: rgba(255, 184, 77, 0.12);
+  --color-uncertain-border: rgba(255, 184, 77, 0.4);
 
   /* ---- Typography ---- */
   --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
 
-  --fs-xs: 0.75rem;
-  --fs-sm: 0.875rem;
-  --fs-base: 1rem;
-  --fs-lg: 1.125rem;
-  --fs-xl: 1.5rem;
-  --fs-2xl: 2rem;
+  --fs-xs: 0.75rem;    /* card label, metadata */
+  --fs-sm: 0.8125rem;  /* body-small, table cells */
+  --fs-base: 0.9375rem; /* body */
+  --fs-lg: 1.125rem;   /* card value */
+  --fs-xl: 1.375rem;   /* section heading */
+  --fs-2xl: 1.75rem;   /* page title */
+  --fs-3xl: 2.25rem;   /* hero number, unused today but reserved */
 
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
+  --fw-bold: 700;
 
-  /* ---- Spacing scale ---- */
+  /* ---- Spacing scale: 4/8/12/16/24/32/48px ---- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
+  --space-12: 3rem;
 
   /* ---- Shape ---- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --shadow-card: 0 1px 2px rgba(20, 24, 31, 0.06), 0 1px 1px rgba(20, 24, 31, 0.04);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px rgba(0, 0, 0, 0.5);
+
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-fast: 160ms var(--ease-standard);
 }
 
-/* ---- Color: dark theme ---- */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0f1216;
-    --color-surface: #171b21;
-    --color-border: #2b3138;
-    --color-text-primary: #e8ebef;
-    --color-text-secondary: #9aa4b0;
-    --color-accent: #5b8dfb;
+/* ---- "Blueprint" (light) -- warm paper + deep ink-blue, a distinct
+   concept, not a dark-theme inversion. Borders are fine hairlines;
+   shadows are barely-there, evoking a technical drawing rather than a
+   generic light-mode webpage. ---- */
+:root[data-theme='light'] {
+  --color-bg: #f4f1e9;
+  --color-surface: #fbf9f3;
+  --color-surface-2: #efe9db;
+  --color-surface-hover: #efe9db;
+  --color-border: rgba(26, 39, 68, 0.15);
+  --color-border-strong: rgba(26, 39, 68, 0.28);
+  --color-text-primary: #1a2744;
+  --color-text-secondary: rgba(26, 39, 68, 0.62);
+  --color-accent: #2f5dbb;
+  --color-accent-strong: #24488f;
 
-    --color-match: #3ecf7e;
-    --color-match-bg: #133023;
-    --color-mismatch: #f0776d;
-    --color-mismatch-bg: #34181a;
-    --color-uncertain: #e0b24a;
-    --color-uncertain-bg: #362a11;
+  /* Same ink-blue as body text -- the trace reads as schematic
+     annotation, not a colored readout, on a paper-toned background. */
+  --color-trace: #1a2744;
 
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
-  }
+  /* Desaturated (not simply darkened) versions of the dark theme's
+     verdict hues -- legible on cream without turning neon. */
+  --color-match: #2f7a5c;
+  --color-match-bg: rgba(47, 122, 92, 0.1);
+  --color-match-border: rgba(47, 122, 92, 0.35);
+  --color-mismatch: #a13b4c;
+  --color-mismatch-bg: rgba(161, 59, 76, 0.1);
+  --color-mismatch-border: rgba(161, 59, 76, 0.35);
+  --color-uncertain: #96661c;
+  --color-uncertain-bg: rgba(150, 102, 28, 0.1);
+  --color-uncertain-border: rgba(150, 102, 28, 0.35);
+
+  --shadow-card: 0 1px 2px rgba(26, 39, 68, 0.08), 0 1px 1px rgba(26, 39, 68, 0.04);
+  --shadow-elevated: 0 8px 24px rgba(26, 39, 68, 0.12);
 }
 
 /* ---- Reset ---- */
@@ -92,40 +138,72 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   font-size: var(--fs-base);
-  line-height: 1.5;
+  line-height: 1.55;
+  font-feature-settings: "tnum" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /* ---- Primitives ---- */
 .mono {
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
+  font-feature-settings: "tnum" 1;
+}
+
+/* A monospace value styled as a citation/identifier chip -- distinct from
+   plain .mono, which is just "this text is code," not "this is a
+   clickable-looking reference." */
+.mono-chip {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-feature-settings: "tnum" 1;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-2);
+  display: inline-block;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
+  padding: 3px var(--space-2);
   border-radius: var(--radius-sm);
+  border: 1px solid transparent;
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   line-height: 1.4;
 }
 
+/* Soft badges: tinted background + colored border + colored text, not a
+   solid fill -- the pattern real security-tool dashboards use. */
 .badge--match {
   color: var(--color-match);
   background: var(--color-match-bg);
+  border-color: var(--color-match-border);
 }
 
 .badge--mismatch {
   color: var(--color-mismatch);
   background: var(--color-mismatch-bg);
+  border-color: var(--color-mismatch-border);
 }
 
 .badge--uncertain {
   color: var(--color-uncertain);
   background: var(--color-uncertain-bg);
+  border-color: var(--color-uncertain-border);
 }
 
 .card {
@@ -136,89 +214,266 @@ body {
 }
 
 /* ====================================================================
-   Screen 3 -- Results Dashboard / Screen 4 -- CVE Investigation Detail
-   No new tokens below -- everything here reuses the tokens above.
+   App shell -- persistent header + fade-transitioned content region
    ==================================================================== */
 
-.screen {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: var(--space-6) var(--space-4) var(--space-8);
-}
-
-.screen-title {
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-semibold);
-  margin: var(--space-4) 0;
-}
-
-.back-link {
-  display: inline-block;
-  color: var(--color-accent);
-  text-decoration: none;
-  font-size: var(--fs-sm);
-  margin-bottom: var(--space-2);
-}
-
-.back-link:hover {
-  text-decoration: underline;
-}
-
-/* -- Tier tabs -- */
-.tier-tabs {
-  display: flex;
-  gap: var(--space-2);
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg); /* fallback for browsers without color-mix()/backdrop-filter */
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-border);
 }
 
+.app-header__inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+}
+
+.app-header__brand {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-base);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.app-header__brand-mark {
+  color: var(--color-accent);
+  font-size: 0.6em;
+}
+
+.app-header__stat {
+  margin-left: auto;
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.app-header__stat strong {
+  color: var(--color-match);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+}
+
+/* Explicit light/dark toggle -- both icons are always in the DOM; which
+   one shows is a pure CSS rule keyed off data-theme, so the click
+   handler only ever has to flip the attribute + localStorage, nothing
+   else re-renders. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.theme-toggle__icon--sun {
+  display: none;
+}
+
+:root[data-theme='light'] .theme-toggle__icon--sun {
+  display: block;
+}
+
+:root[data-theme='light'] .theme-toggle__icon--moon {
+  display: none;
+}
+
+.app-content {
+  transition: opacity var(--transition-fast);
+  opacity: 1;
+}
+
+.app-content.is-transitioning {
+  opacity: 0;
+}
+
+/* ====================================================================
+   Shared screen layout
+   ==================================================================== */
+
+.screen {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4) var(--space-12);
+}
+
+.screen-title {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-6);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-4);
+  transition: color var(--transition-fast);
+}
+
+.back-link:hover {
+  color: var(--color-accent);
+}
+
+/* -- Tier tabs (now rendered inside the persistent header) -- */
+.tier-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .tier-tab {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-3);
   color: var(--color-text-secondary);
   text-decoration: none;
   font-weight: var(--fw-medium);
   font-size: var(--fs-sm);
-  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.tier-tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
 }
 
 .tier-tab--active {
   color: var(--color-text-primary);
-  border-bottom-color: var(--color-accent);
+  background: var(--color-surface-hover);
+}
+
+.tier-tab--compare {
+  margin-left: var(--space-2);
+  color: var(--color-accent);
+}
+
+.tier-tab--compare:hover {
+  background: transparent;
+  color: var(--color-accent-strong);
 }
 
 /* -- Summary strip -- */
 .summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--space-3);
-  margin: var(--space-4) 0 var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin: 0 0 var(--space-8);
 }
 
 .summary-card {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.summary-card:hover {
+  border-color: var(--color-border-strong);
 }
 
 .summary-card__label {
   font-size: var(--fs-xs);
   color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
+  font-weight: var(--fw-medium);
 }
 
 .summary-card__value {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-xl);
   font-weight: var(--fw-semibold);
-  margin-top: var(--space-1);
+  margin-top: var(--space-2);
+  font-feature-settings: "tnum" 1;
 }
 
 .summary-card__arrow {
   color: var(--color-text-secondary);
-  margin: 0 var(--space-1);
+  margin: 0 var(--space-2);
 }
 
 .summary-card__sub {
   font-size: var(--fs-xs);
   color: var(--color-text-secondary);
-  margin-top: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+/* -- Accuracy bars: hand-coded SVG, real proportions, animated fill.
+      Deliberately not colored match/mismatch/uncertain -- an aggregate
+      accuracy percentage isn't a per-case correctness signal, and
+      reusing those colors here would dilute what they mean elsewhere.
+      Baseline is muted; advanced is accent -- "the old way" vs.
+      "what this project built," not "right" vs. "wrong." -- */
+.accuracy-bars {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.accuracy-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.accuracy-bar-row__label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  width: 4.5rem;
+  flex-shrink: 0;
+}
+
+.accuracy-bar-row__value {
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  width: 2.5rem;
+  flex-shrink: 0;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.accuracy-bar-track {
+  flex: 1;
+  height: 6px;
+  display: block;
+  overflow: visible;
+}
+
+.accuracy-bar-fill {
+  transform: scaleX(0);
+  transform-box: fill-box;
+  transform-origin: left center;
+  transition: transform 600ms var(--ease-standard);
+}
+
+.accuracy-bar-fill.is-visible {
+  transform: scaleX(1);
 }
 
 /* -- Case table -- */
@@ -236,23 +491,25 @@ body {
   font-size: var(--fs-xs);
   color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: var(--space-2) var(--space-3);
+  letter-spacing: 0.06em;
+  font-weight: var(--fw-medium);
+  padding: var(--space-3);
   border-bottom: 1px solid var(--color-border);
 }
 
 .case-table td {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
   border-bottom: 1px solid var(--color-border);
   font-size: var(--fs-sm);
 }
 
 .case-row {
   cursor: pointer;
+  transition: background-color var(--transition-fast);
 }
 
 .case-row:hover {
-  background: var(--color-bg);
+  background: var(--color-surface-hover);
 }
 
 .case-row:focus-visible {
@@ -271,7 +528,7 @@ body {
 }
 
 .notice--failed {
-  border-color: var(--color-uncertain);
+  border-color: var(--color-uncertain-border);
   background: var(--color-uncertain-bg);
 }
 
@@ -311,30 +568,32 @@ body {
 
 .verdict-row {
   display: flex;
-  gap: var(--space-6);
-  padding: var(--space-4);
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-6);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+  margin-bottom: var(--space-6);
 }
 
 .verdict-cell__label {
   font-size: var(--fs-xs);
   color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: var(--space-1);
+  letter-spacing: 0.06em;
+  font-weight: var(--fw-medium);
+  margin-bottom: var(--space-2);
 }
 
 /* -- Case detail body -- */
 .detail-meta-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4);
+  gap: var(--space-4) var(--space-6);
   font-size: var(--fs-sm);
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
 .detail-meta {
@@ -343,15 +602,16 @@ body {
 }
 
 .detail-section {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
 .detail-section__title {
   font-size: var(--fs-sm);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
+  font-weight: var(--fw-medium);
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .path-list {
@@ -363,4 +623,625 @@ body {
 
 .path-list li {
   margin-bottom: var(--space-2);
+}
+
+/* ====================================================================
+   Screen 5 -- Evidence Panel / Screen 6 -- Comparison
+   Reuses .badge, .difficulty-tag, .case-table, .back-link, .screen-title,
+   .mono/.mono-chip from above wherever they fit.
+   ==================================================================== */
+
+.evidence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.evidence-entry {
+  padding: var(--space-4);
+  padding-left: calc(var(--space-4) - 3px); /* compensates for the 3px left-border so text still lines up */
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+/* Card rhythm: verified vs. unverified gets a distinct left-border
+   accent -- reuses the existing match/mismatch meaning rather than
+   introducing plain positional alternation, so the color still means
+   something when scanned quickly. */
+.evidence-entry--verified {
+  border-left-color: var(--color-match);
+}
+
+.evidence-entry--unverified {
+  border-left-color: var(--color-mismatch);
+}
+
+.evidence-entry:hover {
+  border-color: var(--color-border-strong);
+}
+
+.evidence-entry__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.evidence-entry__citation {
+  color: var(--color-text-primary);
+  font-weight: var(--fw-medium);
+}
+
+.evidence-entry__detail {
+  font-size: var(--fs-sm);
+  margin: 0 0 var(--space-3);
+}
+
+.evidence-entry__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.evidence-entry__reason {
+  color: var(--color-mismatch);
+  font-size: var(--fs-xs);
+}
+
+/* .comparison-table reuses .case-table's borders/cell spacing; only the
+   row-header cells (the metric name in the left-most column) need
+   different treatment than .case-table's column headers. */
+.comparison-table th[scope='row'] {
+  text-align: left;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-text-primary);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.comparison-table td {
+  font-size: var(--fs-base);
+  vertical-align: top;
+}
+
+.comparison-table td .accuracy-bars {
+  margin-top: var(--space-2);
+}
+
+/* ====================================================================
+   Screen 1 -- Landing / Hero
+   ==================================================================== */
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--space-8) var(--space-4);
+}
+
+/* Restrained, CSS-only animated background -- a slow-drifting dot grid.
+   No canvas/WebGL, no image asset; just a repeating radial-gradient
+   whose position drifts extremely slowly. Opacity kept low so it reads
+   as texture, not a distraction. */
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.hero__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 40%, transparent 0%, var(--color-bg) 90%);
+}
+
+/* Ambient trace-motif background art -- see landing.js's
+   heroTraceBackground(). Very low opacity, deliberately abstract: this
+   is texture, not a diagram making a claim about any real case. */
+.hero-trace-bg {
+  position: absolute;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  opacity: 0.16;
+}
+
+.hero-trace-bg__line {
+  stroke: var(--color-trace);
+  stroke-width: 1.5;
+}
+
+.hero-trace-bg__node {
+  fill: var(--color-trace);
+}
+
+.hero-trace-bg__node--glow {
+  fill: var(--color-mismatch);
+  animation: hero-trace-bg-pulse 3.6s ease-in-out infinite;
+  /* animation-delay for each glow node is set inline per-instance in
+     landing.js -- nth-of-type would count the wrong siblings here since
+     glow and non-glow nodes are both <circle> elements. */
+}
+
+@keyframes hero-trace-bg-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Slow ambient drift on the whole network -- reads as "alive," not
+   distracting. */
+.hero-trace-bg__group {
+  animation: hero-bg-drift 22s ease-in-out infinite alternate;
+  transform-box: fill-box;
+}
+
+@keyframes hero-bg-drift {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-24px, 14px); }
+}
+
+.hero__content {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.hero__eyebrow {
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.hero__title {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.hero__tagline {
+  font-size: var(--fs-lg);
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 32ch;
+}
+
+.hero__stat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+}
+
+.hero__stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-secondary);
+  font-feature-settings: "tnum" 1;
+}
+
+.hero__stat-value--advanced {
+  color: var(--color-match);
+}
+
+.hero__stat-arrow {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-xl);
+}
+
+.hero__stat-label {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+}
+
+.hero__cta {
+  display: inline-block;
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-accent);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  font-weight: var(--fw-medium);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.hero__cta:hover {
+  background: var(--color-accent-strong);
+  transform: translateY(-1px);
+}
+
+.landing-section-label {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-6);
+}
+
+.run-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.run-card {
+  display: block;
+  padding: var(--space-6);
+  text-decoration: none;
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.run-card--link:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.run-card__label {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.run-card__meta {
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+.run-card__accuracy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  font-size: var(--fs-lg);
+}
+
+.run-card__accuracy--advanced {
+  color: var(--color-match);
+  font-weight: var(--fw-semibold);
+}
+
+.run-card__cta {
+  margin-top: var(--space-4);
+  color: var(--color-accent);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+/* ====================================================================
+   Screen 2 -- Pipeline Replay
+   ==================================================================== */
+
+.replay-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.replay-screen-title {
+  margin-bottom: 0;
+}
+
+.replay-skip-btn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.replay-skip-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.replay-stage {
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.replay-stage__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-3);
+}
+
+.replay-stage__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+  flex-shrink: 0;
+}
+
+/* The active stage pulses/glows -- a live-feeling indicator that this is
+   the stage currently "running." */
+.replay-stage--active {
+  border-color: var(--color-accent);
+  animation: replay-stage-pulse 1.6s ease-in-out infinite;
+}
+
+.replay-stage--active .replay-stage__dot {
+  background: var(--color-accent);
+  animation: replay-dot-pulse 1.6s ease-in-out infinite;
+}
+
+.replay-stage--done {
+  border-color: var(--color-match-border);
+}
+
+.replay-stage--done .replay-stage__dot {
+  background: var(--color-match);
+}
+
+@keyframes replay-stage-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(110, 123, 242, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(110, 123, 242, 0); }
+}
+
+@keyframes replay-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.replay-end {
+  margin-top: var(--space-8);
+  text-align: center;
+}
+
+.replay-trace-verdict-note {
+  margin-top: var(--space-4);
+}
+
+/* ====================================================================
+   Delight details: row stagger, replay row-link, empty states, verdict icons
+   ==================================================================== */
+
+.case-row--stagger {
+  animation: case-row-in 260ms var(--ease-standard) both;
+}
+
+@keyframes case-row-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.replay-row-link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+
+.replay-row-link:hover {
+  color: var(--color-accent);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+}
+
+.empty-state-illustration {
+  opacity: 0.8;
+}
+
+.badge--large {
+  font-size: var(--fs-sm);
+  padding: var(--space-1) var(--space-3);
+  gap: var(--space-2);
+}
+
+.verdict-icon {
+  flex-shrink: 0;
+}
+
+/* ====================================================================
+   Reduced motion: decorative animation only, never content visibility
+   ==================================================================== */
+
+/* ====================================================================
+   Signature element -- call-path trace diagram (components/traceDiagram.js)
+   Reused, unmodified, by Screen 4 (case detail) and Screen 2 (replay).
+   ==================================================================== */
+
+.trace-diagram-wrap {
+  margin-bottom: var(--space-6);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+  overflow-x: auto;
+}
+
+/* Used when the diagram already sits on a card's own surface (Screen 2's
+   replay stage) -- no second border/shadow/background nested inside the
+   first. */
+.trace-diagram-wrap--bare {
+  margin-bottom: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.trace-diagram {
+  display: block;
+  overflow: visible;
+}
+
+.trace-segment {
+  stroke: var(--color-trace);
+  stroke-width: 2;
+  fill: none;
+  transition: stroke-dashoffset 700ms var(--ease-standard);
+}
+
+.trace-segment--drawn {
+  stroke-dashoffset: 0 !important;
+}
+
+/* The stub is never "drawn in" like a real segment -- it's static and
+   faded from the moment it appears, precisely because it does NOT
+   complete a connection. Its dasharray already encodes the partial
+   length (see traceDiagram.js); only opacity transitions. */
+.trace-segment--stub {
+  stroke: var(--color-text-secondary);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 400ms var(--ease-standard);
+}
+
+.trace-segment--stub.trace-segment--visible {
+  opacity: 0.6;
+}
+
+.trace-node {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.6);
+  transition: opacity 300ms var(--ease-standard), transform 300ms var(--ease-standard);
+}
+
+.trace-node--revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.trace-node__dot {
+  fill: var(--color-surface-2);
+  stroke: var(--color-trace);
+  stroke-width: 1.5;
+}
+
+.trace-node__label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--color-text-primary);
+}
+
+/* The sink node -- only present when the trace actually confirms
+   REACHABLE. Glows in accent-risk (red), deliberately NOT the trace's
+   own signal color: the line lighting up green means "successfully
+   traced," the red endpoint means "and it's actually dangerous." */
+.trace-node--sink .trace-node__dot {
+  fill: var(--color-mismatch);
+  stroke: var(--color-mismatch);
+}
+
+.trace-node--sink .trace-node__label {
+  fill: #ffffff;
+}
+
+.trace-node__glow {
+  fill: var(--color-mismatch);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.trace-node--sink.trace-node--revealed .trace-node__glow {
+  animation: trace-sink-pulse 1.8s ease-in-out infinite;
+}
+
+/* transform: scale(), not an animated SVG `r` attribute -- works
+   identically everywhere transform does, no reliance on browser support
+   for animating SVG geometry properties via CSS. */
+@keyframes trace-sink-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.25); }
+}
+
+.trace-node--placeholder .trace-node__dot--placeholder {
+  fill: none;
+  stroke: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.trace-node--placeholder .trace-node__label {
+  display: none;
+}
+
+/* ====================================================================
+   Reduced motion: decorative animation only, never content visibility
+   ==================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-trace-bg__group,
+  .hero-trace-bg__node--glow,
+  .replay-stage--active,
+  .replay-stage--active .replay-stage__dot,
+  .case-row--stagger,
+  .trace-node--sink.trace-node--revealed .trace-node__glow {
+    animation: none !important;
+  }
+
+  .accuracy-bar-fill,
+  .trace-segment,
+  .trace-segment--stub,
+  .trace-node {
+    transition: none !important;
+  }
+
+  .app-content,
+  .case-row,
+  .tier-tab,
+  .back-link,
+  .run-card,
+  .hero__cta,
+  .replay-skip-btn,
+  .evidence-entry,
+  .summary-card {
+    transition: none !important;
+  }
 }

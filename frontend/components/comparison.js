@@ -17,6 +17,7 @@
 
 import { getSummary, formatPercent, formatCost, formatDuration } from '../lib/summary.js';
 import { escapeHtml } from '../lib/format.js';
+import { animateBarFills, animateCountUps } from '../lib/animate.js';
 
 const TIER_LABELS = { 'tier-a': 'Tier A', 'tier-b': 'Tier B' };
 
@@ -41,13 +42,42 @@ function cell(summary, render) {
   return summary ? render(summary) : 'n/a';
 }
 
+// Same hand-coded SVG bar pattern as the dashboard's summary strip --
+// accent-vs-muted, not match/mismatch (see styles.css's
+// .accuracy-bar-fill comment for why an aggregate percentage doesn't
+// borrow those three colors).
+function accuracyBarsCell(summary) {
+  if (!summary) return 'n/a';
+  const bar = (pct, colorVar, label) => `
+    <div class="accuracy-bar-row">
+      <span class="accuracy-bar-row__label">${label}</span>
+      <svg class="accuracy-bar-track" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true">
+        <rect width="100" height="6" rx="3" style="fill: var(--color-border);" />
+        <rect class="accuracy-bar-fill" width="${pct === null ? 0 : Math.round(pct * 100)}" height="6" rx="3" style="fill: ${colorVar};" />
+      </svg>
+      <span class="accuracy-bar-row__value" data-countup="${pct === null ? 0 : pct}" data-countup-kind="percent">${formatPercent(pct)}</span>
+    </div>
+  `;
+  return `
+    <div class="accuracy-bars">
+      ${bar(summary.baseline.risk_classification_accuracy, 'var(--color-text-secondary)', 'Baseline')}
+      ${bar(summary.advanced.risk_classification_accuracy, 'var(--color-accent)', 'Advanced')}
+    </div>
+  `;
+}
+
+const COUNT_UP_FORMATTERS = {
+  percent: formatPercent,
+  cost: formatCost,
+  duration: formatDuration,
+};
+
 export function renderComparison(container, { tierAData, tierBData }) {
   const a = column('tier-a', tierAData);
   const b = column('tier-b', tierBData);
 
   container.innerHTML = `
     <div class="screen">
-      <a href="#/dashboard/tier-b" class="back-link">&larr; Back to dashboard</a>
       <h1 class="screen-title">Baseline vs. Advanced Comparison</h1>
       <table class="comparison-table case-table">
         <thead>
@@ -78,11 +108,7 @@ export function renderComparison(container, { tierAData, tierBData }) {
             cell(a.summary, (s) => s.advanced.false_positives),
             cell(b.summary, (s) => s.advanced.false_positives)
           )}
-          ${row(
-            'Accuracy (baseline → advanced)',
-            cell(a.summary, (s) => `${formatPercent(s.baseline.risk_classification_accuracy)} → ${formatPercent(s.advanced.risk_classification_accuracy)}`),
-            cell(b.summary, (s) => `${formatPercent(s.baseline.risk_classification_accuracy)} → ${formatPercent(s.advanced.risk_classification_accuracy)}`)
-          )}
+          ${row('Accuracy (baseline vs. advanced)', accuracyBarsCell(a.summary), accuracyBarsCell(b.summary))}
           ${row(
             'Total cost (advanced)',
             cell(a.summary, (s) => formatCost(s.advanced.total_cost_usd)),
@@ -97,4 +123,7 @@ export function renderComparison(container, { tierAData, tierBData }) {
       </table>
     </div>
   `;
+
+  animateBarFills(container);
+  animateCountUps(container, COUNT_UP_FORMATTERS);
 }
