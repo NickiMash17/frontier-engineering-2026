@@ -71,7 +71,7 @@ estimated. Full narrative for each stage is in
 | **Day 2 (cont.) - 5 Windows-specific bugs found and fixed** | First real Tier B run attempt (later session) showed the agent receiving no real task | Direct testing showed a 3-line probe prompt arriving at the model as only its first line | Fixed, in order: (1) `pwd` vs. `pwd -W` path-doubling in the repo-fetch script, (2) `.cmd` resolution via the `cross-spawn` package (Node's built-in `spawnSync` can't resolve it without `shell:true`, which would break arg escaping), (3) the investigation prompt delivered via stdin instead of argv + the system prompt flattened to one line (root cause of the truncation), (4) subprocess `cwd` pinned to the fixture path (it was inheriting the orchestrator's own working directory/git status), (5) an `EISDIR` crash in the evidence checker on a directory-shaped citation (Experiment 5) |
 | **Day 2 - Tier B result** | Ran `scripts/evaluate_tier_b.js` against all 5 real cases after the fixes | `evaluation/results-tier-b/2026-08-29T13-12-24-798Z/results.json` | **100% advanced vs. 40% baseline** accuracy, 0 advanced false positives/negatives, avg confidence 0.89, avg evidence completeness 86.5%, $0.5680 total cost (~$0.114/case), ~54s avg latency. Every failure on the way here was infrastructure (path/subprocess/harness), never agent reasoning - KEEP SINGLE AGENT now backed by two independent tiers (ADR-005) |
 | **Hardening** | Tier B surfaced a real evidence-quality gap: a search-method citation (e.g. *"repo-wide grep for `require('underscore')`"*) was marked unverified because the checker only understood file+line citations | `tb-1`'s evidence completeness read 83% for a correct, well-reasoned `NOT_REACHABLE` verdict | Added an optional `type: "file" \| "search"` field to the evidence schema (backward compatible, defaults to `"file"`); `checkEvidence` now treats a search entry as its own valid category, not a failed file citation; added a regression test asserting the full multi-line prompt survives via stdin, never argv |
-| **Frontend** | Built a vanilla HTML/CSS/JS dashboard (zero framework, zero build step) directly over the real result JSON already in the repo | `frontend/`, `scripts/frontend/generate_data.js` | No demo/mock data path exists anywhere - every number rendered traces to one of the two real runs above. Results Dashboard, CVE Investigation Detail, Evidence Panel, and Baseline-vs-Advanced Comparison are built; the replay-landing and pipeline-animation screens are not yet built |
+| **Frontend** | Built all 6 screens (Landing/Replay-Select, Pipeline Replay, Results Dashboard, CVE Investigation Detail, Evidence Panel, Baseline-vs-Advanced Comparison) as a vanilla HTML/CSS/JS app (zero framework, zero build step) directly over the real result JSON already in the repo, plus a light/dark theme toggle ("Live Trace" dark theme / "Blueprint" light theme, persisted via localStorage) and a signature hand-coded SVG call-path trace diagram built from real `reachable_path` data, used on both the case detail screen and the pipeline replay | `frontend/`, `scripts/frontend/generate_data.js` | All 6 screens built and verified in browser. Two real bugs found and fixed along the way: (1) Tier A's `reachable_path` format (one array entry with embedded arrows) vs. Tier B's format (one entry per hop) required a generic flattening fix, affecting 5 real cases total; (2) an SVG transform-composition bug (an inline positional transform and a CSS animation transform on the same element -- CSS always wins) collapsed every trace node to a single point, fixed by splitting each node into nested `<g>` elements. No demo/mock data path exists anywhere |
 
 ## 5. How to Run It
 
@@ -84,12 +84,13 @@ npm install
 ```bash
 npm test
 ```
-> Test coverage was extended alongside the work above (Tier B manifest
-> validation, evidence-type handling, a prompt-delivery regression guard),
-> but an auto-mode safety classifier blocked Bash execution in this
-> session for long stretches (see Section 4 and Experiment 4/5) - not
-> every test added since Day 1 has been confirmed passing by an actual
-> `npm test` run in this repository. Run it yourself before relying on it.
+> Confirmed: **37/37 tests passing** (`node --test tests/*.test.js`) in
+> this repository -- covers the baseline version comparator, the
+> advisory index, Tier A fixture ground-truth consistency, the advanced
+> output schema, Tier B manifest validation, evidence-type handling
+> (file vs. search citations), and a regression guard asserting the full
+> multi-line investigation prompt survives delivery via stdin rather
+> than argv.
 
 **Baseline only** (naive version-match scanner, free, no API calls):
 
