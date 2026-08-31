@@ -1,0 +1,5 @@
+{
+  "installCommand": "echo 'no install needed -- zero-dependency vanilla frontend'",
+  "buildCommand": "node ../scripts/frontend/generate_data.js",
+  "outputDirectory": "."
+}
