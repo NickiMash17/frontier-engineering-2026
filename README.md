@@ -4,6 +4,11 @@
 
 Frontier Engineering Challenge 2026 submission (individual, online).
 
+**Live demo:** https://cve-reachability-triage.vercel.app -- the real
+frontend described below, serving the same real Tier A/Tier B result
+data checked into this repo (deployed via Vercel; see Section 5 for how
+to run it yourself instead).
+
 ## 1. Problem, User, Bottleneck
 
 Security and dependency scanners (`npm audit`, Dependabot, Snyk) flag a
@@ -178,9 +183,10 @@ bash evaluation/benchmarks/tier-b/fetch_repos.sh   # clones OWASP/NodeGoat at it
 node scripts/evaluate_tier_b.js
 ```
 
-**Frontend** - regenerate the data, then serve it (do **not** open
-`frontend/index.html` by double-clicking; browsers block ES module
-imports from `file://` origins - see
+**Frontend** - already live at https://cve-reachability-triage.vercel.app
+if you just want to look at it. To run it yourself: regenerate the data,
+then serve it (do **not** open `frontend/index.html` by double-clicking;
+browsers block ES module imports from `file://` origins - see
 [docs/FRONTEND_PLAN.md](docs/FRONTEND_PLAN.md) Section 1):
 
 ```bash
