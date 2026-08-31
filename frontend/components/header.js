@@ -72,7 +72,7 @@ function attachThemeToggle(container) {
 export function renderHeader(container, { activeTier, tierAData, tierBData }) {
   container.innerHTML = `
     <div class="app-header__inner">
-      <span class="app-header__brand"><span class="app-header__brand-mark">●</span> CVE Reachability</span>
+      <a href="#/" class="app-header__brand" aria-label="CVE Reachability -- back to landing page"><span class="app-header__brand-mark">●</span> CVE Reachability</a>
       <nav class="tier-tabs">
         ${Object.entries(TIER_LABELS)
           .map(
